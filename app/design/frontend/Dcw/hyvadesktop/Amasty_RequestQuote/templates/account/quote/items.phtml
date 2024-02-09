@@ -1,0 +1,124 @@
+<?php
+/**
+ * @author Amasty Team
+ * @copyright Copyright (c) 2022 Amasty (https://www.amasty.com)
+ * @package Request a Quote Base for Magento 2
+ */
+?>
+<?php
+/**
+ * @var \Amasty\RequestQuote\Block\Account\Quote\Items $block
+ * @var \Magento\Framework\Escaper $escaper
+ */
+?>
+<div class="order-details-items ordered">
+    <div class="table-wrapper order-items">
+        <table class="data table table-order-items w-full" id="my-orders-table" summary="<?= $escaper->escapeHtml(__('Items Ordered')) ?>">
+            <caption class="table-caption hidden"><?= $escaper->escapeHtml(__('Items Ordered')) ?></caption>
+            <thead>
+            <?php if ($block->isPagerDisplayed()): ?>
+                <tr>
+                    <td colspan="5" data-block="order-items-pager-top" class="order-pager-wrapper order-pager-wrapper-top">
+                        <?= $block->getPagerHtml() ?>
+                    </td>
+                </tr>
+            <?php endif ?>
+            <tr class="am-quotes-head">
+                <th class="col name text-left text-size16 font-semibold text-black pt-4"><?= $escaper->escapeHtml(__('Product Name')) ?></th>
+                 <!--  <th class="col sku text-left text-size16 font-semibold text-black pt-4"><?= $escaper->escapeHtml(__('SKU')) ?></th>    -->
+               <th class="col price text-left text-size16 font-semibold text-black pt-4"><?= $escaper->escapeHtml(__('Price')) ?></th>
+                <!--  <th class="col price text-left text-size16 font-semibold text-black pt-4"><?= $escaper->escapeHtml(__('Requested Price')) ?></th>
+                <th class="col price text-left text-size16 font-semibold text-black pt-4"><?= $escaper->escapeHtml(__('Approved Price')) ?></th>  -->
+                <th class="col qty text-left text-size16 font-semibold text-black pt-4"><?= $escaper->escapeHtml(__('Qty')) ?></th>
+              <!--   <th class="col discount text-left text-size16 font-semibold text-black pt-4"><?= $escaper->escapeHtml(__('Discount Amount')) ?></th>  -->
+                <th class="col subtotal text-left text-size16 font-semibold text-black pt-4"><?= $escaper->escapeHtml(__('Subtotal')) ?></th>
+            </tr>
+            </thead>
+            <?php $items = $block->getItems(); ?>
+            <?php foreach ($items as $item): ?>
+                <?php if ($item->getParentItem()) {
+                    continue;
+                } ?>
+                <tbody>
+                <?= $block->getItemHtml($item) ?>
+                </tbody>
+                <tbody class="quote-item-notes">
+                <?php if ($item->getNotes()): ?>
+                    <tr>
+                        <td colspan="3" class="amquote-cell-container">
+                            <?php if ($item->getNotes()->getCustomerNote()): ?>
+                                <?= $escaper->escapeHtml(__('Customer Note:')) ?>
+                            <div class="item-note amquote-note">
+                                <?= /* @noEscape */ nl2br($escaper->escapeHtml($item->getNotes()->getCustomerNote())) ?>
+                            </div>
+                            <?php endif;?>
+                        </td>
+                        <td colspan="3" class="amquote-cell-container">
+                            <?php if ($item->getNotes()->getAdminNote()): ?>
+                                <?= $escaper->escapeHtml(__('Administrator Note:')) ?>
+                                <div class="item-note amquote-note">
+                                    <?= /* @noEscape */ nl2br($escaper->escapeHtml($item->getNotes()->getAdminNote())) ?>
+                                </div>
+                            <?php endif; ?>
+                        </td>
+                    </tr>
+                <?php endif; ?>
+                </tbody>
+            <?php endforeach; ?>
+            <tfoot>
+            <?php if ($block->isPagerDisplayed()): ?>
+                <tr>
+                    <td colspan="5" data-block="order-items-pager-bottom" class="order-pager-wrapper order-pager-wrapper-bottom">
+                        <?= $block->getPagerHtml() ?>
+                    </td>
+                </tr>
+            <?php endif ?>
+            <?= $block->getChildHtml('quote_totals') ?>
+            </tfoot>
+        </table>
+    </div>
+</div>
+<div class="account-quote-buttons">
+<?php if ($block->isQuoteComplete()): ?>
+    <?= $escaper->escapeHtml(__('Order ID')) ?>: <a href="<?= $escaper->escapeHtml($block->getOrderViewUrl()) ?>">
+        <?= $escaper->escapeHtml(__('# %1', $block->getQuote()->getReservedOrderId())) ?>
+    </a>
+<?php endif; ?>
+<?php if ($block->isMoveShowed()): ?>
+
+	<div x-data="">
+						<button x-on:click="submitData('<?=$block->getMoveUrl()?>')"><?= $escaper->escapeHtml(__('Proceed to checkout')) ?></button>
+					</div>
+    
+<?php endif; ?>
+</div>
+<script>
+  function submitData(url) {
+    //const myDataJSON = JSON.stringify(this.myData);
+	 const formKey = hyva.getFormKey();
+	 const base_url = window.location.origin;
+     window.dispatchEvent(new CustomEvent('amcart-loading-start'));
+console.log(formKey);
+    fetch(url, {
+      method: 'POST',
+      "headers": {
+                        "content-type": "application/x-www-form-urlencoded; charset=UTF-8",
+                    },
+      body:"uenc=" + formKey+"&form_key=" + formKey,
+    })
+    .then(response => {
+      // Handle the response from the server
+      console.log(response);
+	  // location.reload();
+      window.dispatchEvent(new CustomEvent('amcart-loading-stop'));
+	  window.location.href = base_url+'/checkout/cart';
+    })
+    .catch(error => {
+      // Handle any errors that occur
+      console.error(error);
+	  location.reload();
+    });
+  }
+
+  
+</script>

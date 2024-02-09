@@ -1,0 +1,110 @@
+"Delete Rejected Images","Delete Rejected Images"
+"Load More Images","Load More Images"
+"Fetch New Images","Fetch New Images"
+"Manage Images","Manage Images"
+"Edit Image '%1'","Edit Image '%1'"
+"New Image","New Image"
+"Save Image Information","Save Image Information"
+"Delete Entry","Delete Entry"
+"Are you sure you want to do this?","Are you sure you want to do this?"
+"Image Information","Image Information"
+"Image Thumbnail","Image Thumbnail"
+"Hotspot 1","Hotspot 1"
+Title,Title
+"Link URL","Link URL"
+Position-TOP,Position-TOP
+Position-LEFT,Position-LEFT
+"Product Id","Product Id"
+"Hotspot 2","Hotspot 2"
+"Hotspot 3","Hotspot 3"
+"Hotspot 4","Hotspot 4"
+"Hotspot 5","Hotspot 5"
+"Hotspot 6","Hotspot 6"
+"These titles will be displayed in popup on Instagram page. Click of a particular title will redirect users to given link URL.","These titles will be displayed in popup on Instagram page. Click of a particular title will redirect users to given link URL."
+"Image Settings","Image Settings"
+"Authenticate APP","Authenticate APP"
+Instagrampro,Instagrampro
+"Approved Images","Approved Images"
+"Total %1 Instagram Feed Deleted Successfully","Total %1 Instagram Feed Deleted Successfully"
+"There Is No any Record For Delete","There Is No any Record For Delete"
+"New Images","New Images"
+"This image no longer exists.","This image no longer exists."
+"Edit Image","Edit Image"
+"Manage Image","Manage Image"
+Magecomp,Magecomp
+"A total of %1 image(s) have been deleted.","A total of %1 image(s) have been deleted."
+"Instagram connect error","Instagram connect error"
+"Instagram data not founded","Instagram data not founded"
+"Please Enable The Extension","Please Enable The Extension"
+"Required parameter is missing","Required parameter is missing"
+"No approved images found","No approved images found"
+"Value must be either Instagram or CMS","Value must be either Instagram or CMS"
+"We can't save the cron expression.","We can't save the cron expression."
+5,5
+10,10
+20,20
+30,30
+40,40
+50,50
+"Do not show","Do not show"
+"Title with Links","Title with Links"
+"Product Blocks","Product Blocks"
+Users,Users
+Hashtags,Hashtags
+Edit,Edit
+"Approved Instagram Images","Approved Instagram Images"
+"Your browser does not support the video tag.","Your browser does not support the video tag."
+"Unknown Error. Please try again later.","Unknown Error. Please try again later."
+"Server Error. Please try again.","Server Error. Please try again."
+Approve,Approve
+Reject,Reject
+"Load More","Load More"
+". ""...""",". ""..."""
+"Instagram Feed","Instagram Feed"
+"Instagram Integration Pro","Instagram Integration Pro"
+Configuration,Configuration
+"User Access Token","User Access Token"
+"<strong><span style=""color: #000;"">Business Account : https://business.facebook.com/</span></strong><br /> Go to Users > System user > Select User > Generate New Token","<strong><span style=""color: #000;"">Business Account : https://business.facebook.com/</span></strong><br /> Go to Users > System user > Select User > Generate New Token"
+"Get Application Information","Get Application Information"
+"Redirect URL","Redirect URL"
+"Redirect URL for Instagram App registration.","Redirect URL for Instagram App registration."
+"General Settings","General Settings"
+"Update Images By","Update Images By"
+"Enter comma-separated list of hashtags","Enter comma-separated list of hashtags"
+"No. of Images to Fetch","No. of Images to Fetch"
+"Enter number of images to fetch, leave blank or empty for max 50 images.","Enter number of images to fetch, leave blank or empty for max 50 images."
+"Cron Settings","Cron Settings"
+"Auto Fetch Images by Cron","Auto Fetch Images by Cron"
+Frequency,Frequency
+"Start Time","Start Time"
+"Popup Settings","Popup Settings"
+"Show Navigation in Image Popup","Show Navigation in Image Popup"
+"Enabling will allow navigation between images in popup.","Enabling will allow navigation between images in popup."
+"Show Popup With","Show Popup With"
+"Home page","Home page"
+"Show Slider on Home Page","Show Slider on Home Page"
+"Put Code on CMS Home Page : {{block class=""Magecomp\Instagrampro\Block\Homepage"" template=""Magecomp_Instagrampro::instagrampro/homepage.phtml""}} to show images","Put Code on CMS Home Page : {{block class=""Magecomp\Instagrampro\Block\Homepage"" template=""Magecomp_Instagrampro::instagrampro/homepage.phtml""}} to show images"
+"No. of Images to show on Home Page","No. of Images to show on Home Page"
+"Enter number of images to show on home page, leave blank or empty for unlimited images.","Enter number of images to show on home page, leave blank or empty for unlimited images."
+"Product page","Product page"
+"Show Images on Product Pages","Show Images on Product Pages"
+"No. of Images to show on Product Page","No. of Images to show on Product Page"
+"Enter number of images to show on product pages, leave blank or empty for unlimited images.","Enter number of images to show on product pages, leave blank or empty for unlimited images."
+"In More View Section","In More View Section"
+"Enabling will show Instagram images in product more view section.","Enabling will show Instagram images in product more view section."
+"In Product Detail Section","In Product Detail Section"
+"Enabling will show Instagram images in product detail section.","Enabling will show Instagram images in product detail section."
+"Gallery page","Gallery page"
+"No. of Images to Show on Instagram Page","No. of Images to Show on Instagram Page"
+"Enter number of images to show on Instagram page, leave blank or empty for unlimited images.","Enter number of images to show on Instagram page, leave blank or empty for unlimited images."
+Shuffle,Shuffle
+"Every time load Random images, So customer will get new images everytime.","Every time load Random images, So customer will get new images everytime."
+"SEO Friendly URL","SEO Friendly URL"
+"Set URL for Instagram Gallary page.","Set URL for Instagram Gallary page."
+Delete,Delete
+"Delete Approved Image(s)","Delete Approved Image(s)"
+"Are you sure you wan't to delete selected Insgram Image?","Are you sure you wan't to delete selected Insgram Image?"
+Image,Image
+Description,Description
+"User / Hashtag","User / Hashtag"
+"Instagram Page","Instagram Page"

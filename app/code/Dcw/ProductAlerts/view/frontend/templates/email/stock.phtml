@@ -1,0 +1,52 @@
+<?php
+/**
+ * Hyvä Themes - https://hyva.io
+ * Copyright © Hyvä Themes 2020-present. All rights reserved.
+ * This product is licensed per Magento install
+ * See https://hyva.io/license
+ */
+
+use Magento\Framework\Escaper;
+use Magento\ProductAlert\Block\Email\Stock;
+/** @var Escaper $escaper */
+/** @var Stock $block */
+
+$objectManager = \Magento\Framework\App\ObjectManager::getInstance();
+$imageHelper  = $objectManager->get('\Magento\Catalog\Helper\Image');
+?>
+<?php if ($products = $block->getProducts()): ?>
+     <div style="margin: 79px auto 111px !important;width: 560px !important;max-width: 560px !important;min-width: 560px !important;background: #DCE5EC;border-radius: 4px;">
+        <p style="padding-top: 40px !important;margin:0px 0 10px 0 !important;color: #296497 !important;font-size: 20px;line-height: 29px;font-weight: 600;font-family: Open Sans,Arial,sans-serif !important;text-align: center;">
+            <?= $escaper->escapeHtml(__('In stock alert!')) ; ?>
+        </p>
+        <p style="margin:0 0 36px 0 !important;color: #000000 !important;font-size: 16px;line-height: 24px;font-weight: 400;font-family: Open Sans,Arial,sans-serif !important;text-align: center;">
+            <?= $escaper->escapeHtml(__('We wanted you know that this product is now available')) ; ?>
+        </p>
+        <table width="400" cellpadding="0" cellspacing="0" border="0" align="center">
+        <?php foreach ($products as $product):
+                $image_url = $imageHelper->init($product, 'small_image', ['type'=>'small_image'])
+                ->keepAspectRatio(true)->resize('100','100')->getUrl();
+            ?>
+            <tr>
+                <td class="col photo" width="94" valign="top">
+                    <a href="<?= $escaper->escapeUrl($product->getProductUrl()) ?>"
+                       title="<?= $escaper->escapeHtml($product->getName()) ?>"
+                       class="product photo" style="display: block;width: 94px;">
+                       <img src="<?= $block->escapeUrl($image_url) ?>" class="photo image" width="94" height="65" alt="<?= $block->escapeHtml($product->getName()) ?>" style="display: block;width: 94px;height: 65px;object-fit: cover;">
+                    </a>
+                </td>
+                <td class="col item" style="padding: 0 0 0 15px;box-sizing: border-box;">
+                    <p style="margin:0 0 59px 0 !important;color: #000000 !important;font-size: 14px;line-height: 20px;font-weight: 600;font-family: Open Sans,Arial,sans-serif !important;">
+                        <strong class="product name" style="font-weight: 600 !important;">
+                            <a style="color: #000000 !important;text-decoration: none !important;font-weight: 600 !important;font-size: 14px;line-height: 20px;" href="<?= $escaper->escapeUrl($product->getProductUrl()) ?>">
+                                <?= $escaper->escapeHtml($product->getName()) ?>
+                            </a>
+                        </strong>
+                    </p>
+                    <p style="margin:0 0 40px 0 !important;padding-left: 20px !important;box-sizing: border-box;"><a style="height: 34px !important;line-height: 34px !important;display: inline-block !important;width:140px !important;text-align: center;background: #296497 !important;color: #EAF0F5 !important;font-size: 12px;font-weight: 600;font-family: Open Sans,Arial,sans-serif !important;border-radius: 4px;text-decoration: none !important;" href="<?= $escaper->escapeUrl($product->getProductUrl()) ?>"><?= $escaper->escapeHtml(__('View Product')) ?></a></p>                    
+                </td>
+            </tr>
+        <?php endforeach; ?>
+        </table>
+    </div>
+<?php endif; ?> 

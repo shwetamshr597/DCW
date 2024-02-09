@@ -1,0 +1,189 @@
+<?xml version="1.0"?>
+<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:noNamespaceSchemaLocation="urn:magento:module:Magento_Config:etc/system_file.xsd">
+    <system>
+        <tab id="magecomp" translate="label" sortOrder="100" class="magecomp-logo">
+            <label><![CDATA[]]></label>
+        </tab>
+        <section id="instagrampro" translate="label" type="text" sortOrder="10" showInDefault="1" showInWebsite="1"
+                 showInStore="1">
+            <label>Instagram Integration Pro</label>
+            <tab>magecomp</tab>
+            <resource>Magecomp_Instagrampro::config_instagrampro</resource>
+            <group id="module_options" translate="label" sortOrder="10" type="text" showInDefault="1" showInWebsite="1"
+                   showInStore="1">
+                <label>Configuration</label>
+                <field id="enabled" translate="label" sortOrder="10" type="select" showInDefault="1" showInWebsite="1"
+                       showInStore="1">
+                    <label>Instagram Integration Pro</label>
+                    <source_model>Magento\Config\Model\Config\Source\Enabledisable</source_model>
+                </field>
+                <field id="access_token" translate="label comment" sortOrder="30" type="text" showInDefault="1"
+                       showInWebsite="1" showInStore="1">
+                    <label>User Access Token</label>
+                    <comment><![CDATA[<strong><span style="color: #000;">Business Account : https://business.facebook.com/</span></strong><br /> Go to Users > System user > Select User > Generate New Token]]></comment>
+                    <validate>required-entry validate-no-html-tags</validate>
+                </field>
+                <field id="getappinfo" translate="label comment" type="button" sortOrder="35" showInDefault="1" showInWebsite="1" showInStore="1">
+                    <frontend_model>Magecomp\Instagrampro\Block\Adminhtml\System\Config\Form\Field\Getappinfo</frontend_model>
+                    <label>Get Application Information</label>
+                </field>
+                <field id="redirecturi" translate="label comment" sortOrder="40" type="text" showInDefault="1"
+                       showInWebsite="1" showInStore="1">
+                    <label>Redirect URL</label>
+                    <comment><![CDATA[Redirect URL for Instagram App registration.]]></comment>
+                    <frontend_model>Magecomp\Instagrampro\Block\Adminhtml\System\Config\Form\Field\Redirecturl</frontend_model>
+                </field>
+            </group>
+            <group id="generalgroup" translate="label" sortOrder="15" type="text" showInDefault="1" showInWebsite="1"
+                   showInStore="1">
+                <label>General Settings</label>
+                <field id="updatetype" translate="label" sortOrder="60" type="select" showInDefault="1"
+                       showInWebsite="1" showInStore="1">
+                    <label>Update Images By</label>
+                    <source_model>Magecomp\Instagrampro\Model\Source\Updatetype</source_model>
+                </field>
+                <field id="tags" translate="label comment" sortOrder="70" type="textarea" showInDefault="1"
+                       showInWebsite="1" showInStore="1">
+                    <label>Hashtags</label>
+                    <comment><![CDATA[Enter comma-separated list of hashtags]]></comment>
+                    <depends>
+                        <field id="updatetype">0</field>
+                    </depends>
+                </field>
+                <field id="imagefatch" translate="label comment" sortOrder="90" type="select" showInDefault="1"
+                       showInWebsite="1" showInStore="1">
+                    <label>No. of Images to Fetch</label>
+                    <source_model>Magecomp\Instagrampro\Model\Source\Imagefetch</source_model>
+                    <comment><![CDATA[Enter number of images to fetch, leave blank or empty for max 50 images.]]></comment>
+                </field>
+            </group>
+            <group id="cronsetup" translate="label" sortOrder="17" type="text" showInDefault="1" showInWebsite="1"
+                   showInStore="1">
+                <label>Cron Settings</label>
+                <field id="autofetch" translate="label" sortOrder="10" type="select" showInDefault="1" showInWebsite="1"
+                       showInStore="1">
+                    <label>Auto Fetch Images by Cron</label>
+                    <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+                </field>
+                <field id="frequency" translate="label" type="select" sortOrder="100" showInDefault="1" showInWebsite="1" showInStore="1">
+                    <label>Frequency</label>
+                    <source_model>Magento\Cron\Model\Config\Source\Frequency</source_model>
+                    <backend_model>Magecomp\Instagrampro\Model\Source\Backend\Frequency</backend_model>
+                    <depends>
+                        <field id="autofetch">1</field>
+                    </depends>
+                </field>
+                <field id="time" translate="label" type="time" sortOrder="110" showInDefault="1" showInWebsite="1" showInStore="1">
+                    <label>Start Time</label>
+                    <depends>
+                        <field id="autofetch">1</field>
+                    </depends>
+                </field>
+            </group>
+            <group id="popupgroup" translate="label" sortOrder="20" type="text" showInDefault="1" showInWebsite="1"
+                   showInStore="1">
+                <label>Popup Settings</label>
+                <field id="shownp" translate="label comment" sortOrder="100" type="select" showInDefault="1"
+                       showInWebsite="1" showInStore="1">
+                    <label>Show Navigation in Image Popup</label>
+                    <comment> <![CDATA[ Enabling will allow navigation between images in popup.]]></comment>
+                    <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+                </field>
+                <field id="displayproduct" translate="label comment" sortOrder="110" type="select" showInDefault="1"
+                       showInWebsite="1" showInStore="1">
+                    <label>Show Popup With</label>
+                    <source_model>Magecomp\Instagrampro\Model\Source\Popuptype</source_model>
+                </field>
+            </group>
+            <group id="homegroup" translate="label" sortOrder="30" type="text" showInDefault="1" showInWebsite="1"
+                   showInStore="1">
+                <label>Home page</label>
+                <field id="homepage" translate="label comment" sortOrder="20" type="select" showInDefault="1"
+                       showInWebsite="1" showInStore="1">
+                    <label>Show Slider on Home Page</label>
+                    <comment>
+                        <![CDATA[ Put Code on CMS Home Page : {{block class="Magecomp\Instagrampro\Block\Homepage" template="Magecomp_Instagrampro::instagrampro/homepage.phtml"}} to show images]]></comment>
+                    <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+                </field>
+                <field id="homepage_limit" translate="label comment" sortOrder="30" type="text" showInDefault="1"
+                       showInWebsite="1" showInStore="1">
+                    <label>No. of Images to show on Home Page</label>
+                    <comment>Enter number of images to show on home page, leave blank or empty for unlimited images.</comment>
+                    <validate>validate-number</validate>
+                    <depends>
+                        <field id="homepage">1</field>
+                    </depends>
+                </field>
+            </group>
+            <group id="productgroup" translate="label" sortOrder="40" type="text" showInDefault="1" showInWebsite="1"
+                   showInStore="1">
+                <label>Product page</label>
+                <field id="product" translate="label comment" sortOrder="10" type="select" showInDefault="1"
+                       showInWebsite="1" showInStore="1">
+                    <label>Show Images on Product Pages</label>
+                    <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+                </field>
+
+                <field id="product_limit" translate="label comment" sortOrder="20" type="text" showInDefault="1"
+                       showInWebsite="1" showInStore="1">
+                    <label>No. of Images to show on Product Page</label>
+                    <comment><![CDATA[Enter number of images to show on product pages, leave blank or empty for unlimited images.]]>
+                    </comment>
+                    <depends><field id="product">1</field></depends>
+                    <validate>validate-number</validate>
+                </field>
+                <field id="product_more" translate="label comment" sortOrder="30" type="select" showInDefault="1"
+                       showInWebsite="1" showInStore="1">
+                    <label>In More View Section</label>
+                    <comment><![CDATA[Enabling will show Instagram images in product more view section.]]></comment>
+                    <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+                    <depends><field id="product">1</field></depends>
+                </field>
+                <field id="product_detail" translate="label comment" sortOrder="40" type="select" showInDefault="1"
+                       showInWebsite="1" showInStore="1">
+                    <label>In Product Detail Section</label>
+                    <comment><![CDATA[Enabling will show Instagram images in product detail section.]]></comment>
+                    <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+                    <depends><field id="product">1</field></depends>
+                </field>
+                <field id="proddetailtitle" translate="label comment" sortOrder="50" type="text" showInDefault="1"
+                       showInWebsite="1" showInStore="1">
+                    <label>Title</label>
+                    <depends>
+                        <field id="product">1</field>
+                        <field id="product_detail">1</field>
+                    </depends>
+                    <validate>required-entry validate-no-html-tags validate-length minimum-length-3</validate>
+                </field>
+            </group>
+            <group id="gallerygroup" translate="label" sortOrder="50" type="text" showInDefault="1" showInWebsite="1"
+                   showInStore="1">
+                <label>Gallery page</label>
+                <field id="galarytitle" translate="label comment" sortOrder="10" type="text" showInDefault="1"
+                       showInWebsite="1" showInStore="1">
+                    <label>Title</label>
+                    <validate>required-entry validate-no-html-tags validate-length minimum-length-3</validate>
+                </field>
+                <field id="imagecount" translate="label comment" sortOrder="20" type="text" showInDefault="1"
+                       showInWebsite="1" showInStore="1">
+                    <label>No. of Images to Show on Instagram Page</label>
+                    <comment><![CDATA[Enter number of images to show on Instagram page, leave blank or empty for unlimited images.]]></comment>
+                    <validate>validate-number</validate>
+                </field>
+                <field id="shuffle" translate="label comment" sortOrder="30" type="select" showInDefault="1"
+                       showInWebsite="1" showInStore="1">
+                    <label>Shuffle</label>
+                    <comment><![CDATA[Every time load Random images, So customer will get new images everytime.]]></comment>
+                    <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+                </field>
+                <field id="seorurl" translate="label comment" sortOrder="40" type="text" showInDefault="1"
+                       showInWebsite="1" showInStore="1">
+                    <label>SEO Friendly URL</label>
+                    <comment><![CDATA[Set URL for Instagram Gallary page.]]></comment>
+                    <validate>required-entry validate-no-html-tags validate-length minimum-length-3</validate>
+                </field>
+            </group>
+        </section>
+    </system>
+</config>

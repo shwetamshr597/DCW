@@ -1,0 +1,235 @@
+<?php
+/**
+ * Hyvä Themes - https://hyva.io
+ * Copyright © Hyvä Themes 2020-present. All rights reserved.
+ * This product is licensed per Magento install
+ * See https://hyva.io/license
+ */
+
+use Magento\Framework\View\Element\Template;
+use Magento\Framework\Escaper;
+use Hyva\AmastyRequestQuote\ViewModel\Cart\Items;
+use Hyva\Theme\Model\ViewModelRegistry;
+
+/** @var Template $block */
+/** @var Escaper $escaper */
+/** @var ViewModelRegistry $viewModels */
+
+$quoteCartViewModel = $viewModels->require(Items::class)
+
+?>
+
+<script>
+    function cartQuoteTotals() {
+        return {
+            fetchEmail: BASE_URL + 'amasty_quote/cart/customer',
+            cartId: null,
+            cartData: null,
+            loading: false,
+            customer: null,
+            email: '',
+            password: '',
+            minChars: 10,
+            delay: null,
+            showPassword: false,
+            errorMessage: '',
+            errorLogin: false,
+            onPrivateContentLoaded(data) {
+                this.cartId = data.cart && data.cart.cartId;
+                this.customer = data.customer;
+            },
+            getQuoteCartData() {
+                this.cartData = <?= $quoteCartViewModel->getAmastyQuote(); ?>;
+            },
+            updateQuoteCartData(e, action) {
+                e.preventDefault();
+                const self = this,
+                    cart_id = <?= $quoteCartViewModel->getQuoteId(); ?>,
+                    postUrl = '<?= $escaper->escapeUrl($block->getUrl('amasty_quote/cart/updatePost')) ?>',
+                    formKey = document.querySelector('input[name=form_key]').value,
+                    form = document.getElementById('form-validate');
+
+                    form.onSubmit = function onSubmit(e) {
+                        e.preventDefault();
+                    }
+
+                    let data = new URLSearchParams(new FormData(form)).toString() + '&update_cart_action=' + action;
+
+                    fetch(postUrl, {
+                        "headers": {
+                            "content-type": "application/x-www-form-urlencoded; charset=UTF-8",
+                            "X-Requested-With": "XMLHttpRequest"
+                        },
+                        "method": "POST",
+                        "mode": "cors",
+                        "credentials": "include",
+                        "body": new URLSearchParams(data)
+                    }).then((response) => {
+                        return response.json();
+                    }).then((responseData) => {
+                        window.location.reload();
+                    })
+                        .catch((err) => {
+                            console.log('Error message:', err);
+                        })
+            },
+            checkEmail() {
+                const self = this;
+                if (self.email.length >= self.minChars) {
+                    self.delay = setTimeout(function () {
+                        self.getEmail();
+                    }, 550)
+                }
+            },
+            getEmail() {
+                const data = {
+                    email: this.email,
+                    submit_action: 'check_email'
+                }
+                window.dispatchEvent(new CustomEvent('amcart-loading-start'));
+                fetch(this.fetchEmail, {
+                    "headers": {
+                        "content-type": "application/x-www-form-urlencoded; charset=UTF-8",
+                        "X-Requested-With": "XMLHttpRequest"
+                    },
+                    "method": "POST",
+                    "mode": "cors",
+                    "credentials": "include",
+                    "body": new URLSearchParams(data)
+                }).then((response) => {
+                    return response.json();
+                }).then((res) => {
+                    if (res.email) {
+                        var fblink = document.querySelectorAll('li.facebook a');
+                        var googlelink = document.querySelectorAll('li.googleplus a');
+                        if (res.message == 'Email exists with facebook') {
+                            fblink[0].click();
+                        } else if(res.message == 'Email exists with googleplus') {
+                            googlelink[0].click();
+                        } else {
+                        this.showPassword = true;
+						// this.loading = false;
+                        }
+                        window.dispatchEvent(new CustomEvent('amcart-loading-stop'));
+                    } else {
+                        this.showPassword = false;
+                        this.password = '';
+						// this.loading = false;
+                        window.dispatchEvent(new CustomEvent('amcart-loading-stop'));
+                    }
+                })
+            },
+            _stopInterval: function () {
+                clearTimeout(this.delay);
+            },
+            quoteLogin() {
+                const data = {
+                    email: this.email,
+                    password: this.password,
+                    submit_action: 'login_customer'
+                }
+                fetch(this.fetchEmail, {
+                    "headers": {
+                        "content-type": "application/x-www-form-urlencoded; charset=UTF-8",
+                        "X-Requested-With": "XMLHttpRequest"
+                    },
+                    "method": "POST",
+                    "mode": "cors",
+                    "credentials": "include",
+                    "body": new URLSearchParams(data)
+                }).then((response) => {
+                    return response.json();
+                }).then((res) => {
+                    if (res.errors) {
+                        console.log(res);
+                        this.errorMessage = res.message;
+                        this.errorLogin = res.errors;
+                    } else {
+                        window.location.reload();
+                    }
+                }).finally(() => {
+                    setTimeout(() => {
+                        this.errorLogin = false;
+                        this.errorMessage = '';
+                    }, 5000);
+                })
+            },
+            quoteFormSubmit(event) {
+                event.preventDefault();
+                this.validate()
+                    .then(() => {
+                        this.submitQuote()
+                    })
+                    .catch((invalid) => {
+                        if (invalid.length > 0) {
+                            invalid[0].focus();
+                        }
+                    });
+            },
+            submitQuote() {
+                console.log('USO');
+
+                const self = this,
+                    quoteCartForm = document.querySelector('.amasty-quote-update'),
+                    customerForm = document.querySelector('#quote-details'),
+                    postUrl = '<?= $escaper->escapeUrl($block->getUrl('amasty_quote/cart/updatePost')) ?>';
+
+                const formDataCart = new URLSearchParams(new FormData(quoteCartForm)).toString();
+                const formDataCustomer = new URLSearchParams(new FormData(customerForm)).toString();
+
+                const body = formDataCart + '&' + formDataCustomer;
+
+                ///this.loading = true;
+				window.dispatchEvent(new CustomEvent('amcart-loading-start'));
+				
+
+                fetch(postUrl, {
+                    "headers": {
+                        "content-type": "application/x-www-form-urlencoded; charset=UTF-8",
+                        "X-Requested-With": "XMLHttpRequest"
+                    },
+                    "method": "POST",
+                    "mode": "cors",
+                    "credentials": "include",
+                    "body": body
+                }).then((response) => {
+                    return response.json();
+                }).then((res) => {
+                    // this.loading = false;
+					window.dispatchEvent(new CustomEvent('amcart-loading-stop'));
+                    window.location.href = res.url;
+                }).catch((err) => {
+                    console.log('Error message:', err);
+                })
+            },
+            updateQuote(e) {
+                e.preventDefault();
+                const self = this,
+                    baseUrl = '<?= $escaper->escapeUrl($block->getUrl('amasty_quote/cart/updateItemOptions')) ?>',
+                    quoteId = 'id/<?php echo $quoteCartViewModel->getQuoteItemId() ?>',
+                    postUrl = baseUrl + quoteId,
+                    form = document.getElementById('product_addtocart_form'),
+                    body = new URLSearchParams(new FormData(form)).toString();
+
+                fetch(postUrl, {
+                    "headers": {
+                        "content-type": "application/x-www-form-urlencoded; charset=UTF-8",
+                        "X-Requested-With": "XMLHttpRequest"
+                    },
+                    "method": "POST",
+                    "mode": "cors",
+                    "credentials": "include",
+                    "body": body
+                }).then((response) => {
+                    window.location.href = response.url;
+                    return response;
+                }).then((res) => {
+                    // this.loading = false;
+					window.dispatchEvent(new CustomEvent('amcart-loading-stop'));
+                }).catch((err) => {
+                    console.log('Error message:', err);
+                })
+            }
+        }
+    }
+</script>

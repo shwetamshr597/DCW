@@ -1,0 +1,49 @@
+<!--
+/**
+ * Copyright © Magento, Inc. All rights reserved.
+ * See COPYING.txt for license details.
+ */
+-->
+
+<!-- ko foreach: getRegion('before_details') -->
+    <!-- ko template: getTemplate() --><!-- /ko -->
+<!-- /ko -->
+<div class="product-item-details">
+    <div class="product-item-inner">
+        <div class="product-item-name-block">
+            <strong class="product-item-name" data-bind="html: getNameUnsanitizedHtml($parent)"></strong>
+        </div>
+       
+        <!-- ko if: (getParsedOptions($parent).length > 0)-->
+        <div class="product options">
+            <dl class="item-options" style="margin:0">
+                <!--ko foreach: getParsedOptions($parent)-->
+                    <!-- ko ifnot: ($data.label == "Weight" || $data.label == "" || $data.label == "Custom Roll Length" || $data.label == "Configurable Product Id" || $data.label == "Configurable Product Url" || $data.label == "Configurable Product Image" || $data.label == "Product Name")-->
+                    <dt class="label" data-bind="text: label"></dt>
+                        <!-- ko if: ($data.full_view)-->
+                        <!-- ko with: {full_viewUnsanitizedHtml: $data.full_view}-->
+                        <dd class="values" data-bind="html: full_viewUnsanitizedHtml"></dd>
+                        <!-- /ko -->
+                        <!-- /ko -->
+                        <!-- ko ifnot: ($data.full_view)-->
+                        <!-- ko with: {valueUnsanitizedHtml: $data.value}-->
+                        <dd class="values" data-bind="html: valueUnsanitizedHtml"></dd>
+                        <!-- /ko -->
+                        <!-- /ko -->
+                    <!-- /ko -->
+                <!-- /ko -->
+            </dl>
+        </div>
+        <!-- /ko -->
+    </div>
+    <!-- ko foreach: getRegion('after_details') -->
+        <!-- ko template: getTemplate() --><!-- /ko -->
+    <!-- /ko -->
+    <div class="details-qty">
+        <span class="label"><!-- ko i18n: 'Qty' --><!-- /ko --></span>
+        <span class="value" data-bind="text: $parent.qty.toLocaleString(window.LOCALE)"></span>
+    </div>
+    <!-- ko foreach: getRegion('item_message') -->
+        <!-- ko template: getTemplate() --><!-- /ko -->
+    <!-- /ko -->
+</div>

@@ -1,0 +1,10 @@
+<?xml version="1.0"?>
+<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:module:Magento_Backend:etc/menu.xsd">
+  <menu>
+    <add id="Magecomp_Instagrampro::instagrampro" resource="Magecomp_Instagrampro::instagrampro" module="Magecomp_Instagrampro" title="Instagram Integration Pro" sortOrder="20"/>
+    <add id="Magecomp_Instagrampro::instagramprobackend" resource="Magecomp_Instagrampro::instagramprobackend" module="Magecomp_Instagrampro" title="New Feed" sortOrder="10" action="instagrampro/instagrampro/new/" parent="Magecomp_Instagrampro::instagrampro"/>
+    <add id="Magecomp_Instagrampro::instagramprobackend2" resource="Magecomp_Instagrampro::instagramprobackend2" module="Magecomp_Instagrampro" title="Approved Feed" sortOrder="20" action="instagrampro/instagrampro/approved" parent="Magecomp_Instagrampro::instagrampro"/>
+    <add id="Magecomp_Instagrampro::instagramproimglinkdata" resource="Magecomp_Instagrampro::instagramproimglinkdata" module="Magecomp_Instagrampro" title="Approved Feed Manager" sortOrder="30" action="instagrampro/proindex/index" parent="Magecomp_Instagrampro::instagrampro"/>
+    <add id="Magecomp_Instagrampro::instagramprosetting" resource="Magecomp_Instagrampro::config_instagrampro" module="Magecomp_Instagrampro" title="Configuration" sortOrder="40" action="adminhtml/system_config/edit/section/instagrampro" parent="Magecomp_Instagrampro::instagrampro"/>
+  </menu>
+</config>

@@ -1,0 +1,16 @@
+<?xml version="1.0"?>
+<!--
+/** OrderRestrictions di xml
+ * @category  Dotcomweavers
+ * @package   Dotcomweavers_OrderRestrictions
+ * @author    Dotcomweavers
+ * @copyright Copyright (c) Dotcomweavers
+ */
+ */
+-->
+<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:framework:ObjectManager/etc/config.xsd">
+    <type name="Magento\Sales\Api\OrderManagementInterface">
+        <plugin name="before_place_order_operation"
+                type="Dotcomweavers\OrderRestrictions\Plugin\OrderManagement"/>
+    </type>
+</config>

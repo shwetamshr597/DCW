@@ -1,0 +1,14 @@
+<?xml version="1.0"?>
+<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:module:Magento_Cron:etc/crontab.xsd">
+    <group id="default">
+        <job name="instagram_likeupdate" instance="Magecomp\Instagrampro\Cron\Updatefeed" method="updatelikes">
+            <schedule>* */1 * * *</schedule>
+        </job>
+        <job name="instagram_imageupdate" instance="Magecomp\Instagrampro\Cron\Updatefeed" method="updateimages">
+            <config_path>crontab/default/jobs/instagram_imageupdate/schedule/cron_expr</config_path>
+        </job>
+        <job name="instagram_likeupdate" instance="Magecomp\Instagrampro\Cron\Updatefeed" method="updatelink">
+            <schedule>59 23 * * *</schedule>
+        </job>
+    </group>
+</config>

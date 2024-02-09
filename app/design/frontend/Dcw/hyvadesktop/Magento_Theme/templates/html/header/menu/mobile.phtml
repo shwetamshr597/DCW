@@ -1,0 +1,194 @@
+<?php
+/**
+ * Hyvä Themes - https://hyva.io
+ * Copyright © Hyvä Themes 2020-present. All rights reserved.
+ * This product is licensed per Magento install
+ * See https://hyva.io/license
+ */
+
+use Hyva\Theme\Model\ViewModelRegistry;
+use Hyva\Theme\ViewModel\HeroiconsOutline;
+use Hyva\Theme\ViewModel\Navigation;
+use Magento\Framework\View\Element\Template;
+use Magento\Framework\Escaper;
+use Magento\Catalog\Model\CategoryRepository; 
+
+/** @var Template $block */
+/** @var Escaper $escaper */
+/** @var ViewModelRegistry $viewModels */
+
+/** @var HeroiconsOutline $heroicons */
+$heroicons = $viewModels->require(HeroiconsOutline::class);
+
+/** @var Navigation $viewModelNavigation */
+$viewModelNavigation = $viewModels->require(Navigation::class);
+
+$uniqueId = '_' . uniqid();
+
+// Order is important here: 1. build the menu data, 2. then set the cache tags from the view model identities
+$menuItems = $viewModelNavigation->getNavigation(4);
+$block->setData('cache_tags', $viewModelNavigation->getIdentities());
+
+$categoryRepository = \Magento\Framework\App\ObjectManager::getInstance()->get(CategoryRepository::class);
+$imageHelper = \Magento\Framework\App\ObjectManager::getInstance()->get(\Magento\Catalog\Helper\Image::class);
+$placeholderimage = $imageHelper->getDefaultPlaceholderUrl('image');
+
+?>
+<div x-data="initMenuMobile<?= $escaper->escapeHtml($uniqueId) ?>()"
+     class="z-50 order-2 sm:order-1 lg:order-2 navigation xl:hidden"
+>
+    <!-- mobile -->    
+    <div @load.window="setActiveMenu($root)"
+         class="mobile-menu bg-lightblue"
+         :class="{'h-screen fixed top-0 left-0 w-full' : open}"
+         @toggle-mobile-menu.window="open = !open"
+         @keydown.window.escape="open=false"
+    >
+        <div class="flex items-baseline justify-between ml-0 menu-icon">
+            <div class="flex justify-end w-full">
+                <a @click="$dispatch('toggle-mobile-menu')"
+                       class="flex items-center justify-center cursor-pointer"
+                       :class="{ 'ml-auto': open }">                       
+                       <span class="close-icon px-5 py-2 text-size12 font-normal text-custom-blue rounded-md absolute" :class="{ 'hidden' : !open, 'block': open }">CLOSE</span>
+                    <img class="menu_icon -mt-0 mr-2 block" :class="{ 'block' : !open, 'hidden': open }" src="<?php echo $this->getViewFileUrl('images/menu-icon.png'); ?>" width="25" height="17" alt="menu-icon">
+                </a>
+            </div>
+        </div>
+        <div class="menu-overlay hidden" :class="{ 'hidden' : !open }" @click="$dispatch('toggle-mobile-menu')"></div>
+        <nav
+            class="hidden w-full h-full duration-150 ease-in-out transform transition-display pt-5 pr-5 pl-12"
+            :class="{ 'hidden' : !open }"
+        >
+        <span class="menu-label text-size28 font-medium text-black pt-1 pb-4" :class="{ 'hidden' : !open, 'block': open }">Menu</span>
+        <div class="nav-in overflow-y-auto overflow-x-hidden h-5/6">
+        <?php foreach ($menuItems as $index => $menuItem): ?>
+            <div class="level-0">
+               <!--  <span
+                    class="flex items-center transition-transform duration-150 ease-in-out transform"
+                    :class="{
+                        '-translate-x-full' : mobilePanelActiveId,
+                        'translate-x-0' : !mobilePanelActiveId
+                    }"
+                > -->
+                <span class="flex items-center transition-transform duration-150 ease-in-out transform mb-3">
+                    <a class="flex items-center w-full cursor-pointer level-0 text-size24 font-medium text-black no-underline"
+                       href="<?= $escaper->escapeUrl($menuItem['url']) ?>"
+                       title="<?= $escaper->escapeHtmlAttr($menuItem['name']) ?>">
+                        <?= $escaper->escapeHtml($menuItem['name']) ?>
+                    </a>
+                    <?php if (!empty($menuItem['childData'])): ?>
+                    <a class="absolute right-0 cursor-pointer menu_arw1" :class="{
+                        'active' : mobilePanelActiveId,
+                        '' : !mobilePanelActiveId
+                    }"
+                          @click="mobilePanelActiveId =
+                          mobilePanelActiveId === '<?= /* @noEscape */ (string) $index ?>' ?
+                           0 : '<?= /* @noEscape */ (string) $index ?>'"
+                    >
+                        <img src="<?php echo $this->getViewFileUrl('images/menu-arw.png'); ?>" width="17" height="10" alt="menu-arw">
+                    </a>
+                    <?php endif; ?>
+                </span>
+                <?php if (!empty($menuItem['childData'])): ?>
+                    <div
+                        class="w-full h-full transition-transform duration-200 ease-in-out hidden transform"
+                        :class="{
+                            'hidden' : mobilePanelActiveId !== '<?= /* @noEscape */ (string) $index ?>',
+                            'block' : mobilePanelActiveId === '<?= /* @noEscape */ (string) $index ?>',
+                        }"
+                    >
+                        <!-- <a class="flex items-center cursor-pointer text-size18 font-normal text-black mb-4"
+                              @click="mobilePanelActiveId = 0"
+                        >
+                            <span class="ml-0">
+                                <//?= $escaper->escapeHtml($menuItem['name']) ?>
+                            </span>
+                            <img src="<//?php echo $this->getViewFileUrl('images/menu-arw.png'); ?>" width="13" height="8" alt="menu-arw">
+                        </a> -->
+                        <!-- <a href="<//?= $escaper->escapeUrl($menuItem['url']) ?>"
+                           title="<//?= $escaper->escapeHtmlAttr($menuItem['name']) ?>"
+                           class="flex items-center w-full px-8 py-4 border-b cursor-pointer
+                            bg-container-lighter border-container hidden"
+                        >
+                            <span class="w-6"></span>
+                            <span class="ml-4"><//?= $escaper->escapeHtml(__('View All')) ?></span></a> -->
+                        <?php foreach ($menuItem['childData'] as $subMenuItem): ?>
+                            
+                            <li class="imgcat list-none relative" x-data="{ show: false }" >
+                            <a href="<?= $escaper->escapeUrl($subMenuItem['url']) ?>"
+                               title="<?= $escaper->escapeHtmlAttr($subMenuItem['name']) ?>"
+                               class="flex items-center w-full cursor-pointer text-size18 font-normal text-black mb-4"
+                            >
+                                <!-- <span class="w-6"></span> -->
+                                <span>
+                                    <?= $escaper->escapeHtml($subMenuItem['name']) ?>
+                                </span>
+                            </a>
+                            
+                            <?php if($subMenuItem['childData'] && count($subMenuItem['childData'])>0){?>
+                                <img src="<?php echo $this->getViewFileUrl('images/menu-arw.png'); ?>" width="13" height="8" alt="menu-arw" @click="show = !show" class="absolute menu_arw" x-bind:class="show ? 'active' : ''">
+                        <!-- <svg xmlns="http://www.w3.org/2000/svg" x-show="!show"  x-on:click="show = true"  class="w-full h-full p-1" width="24" height="24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+                        </svg>
+                        <svg xmlns="http://www.w3.org/2000/svg" x-show="show" fill="none" viewBox="0 0 24 24"  x-on:click="show = false" stroke="currentColor" width="24" height="24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
+                        </svg>  -->
+                             <ul class="z-10 w-full" x-show="show"> 
+                                <?php $count=0;foreach ($subMenuItem['childData'] as $itemLevel3):
+                                $catIdLvl2    = ($pos = strrpos($subMenuItem['id'], '-')) !== false
+                                    ? substr($subMenuItem['id'], $pos + 1)
+                                    : 0;
+                                $category = $categoryRepository->get($catIdLvl2); 
+                                $catThumbnail = $category->getData('cat_thumbnail');
+                                $count=$count+1;
+                                                    ?>
+                                    <li class="level-2">
+                                        <a href="<?= $escaper->escapeUrl($itemLevel3['url']) ?>"
+                                           title="<?= $escaper->escapeHtmlAttr($itemLevel3['name']) ?>"
+                                           class="level-2 pl-5 flex items-center w-full cursor-pointer text-size16 font-normal text-black mb-4">
+                                            <!-- <//?php if($catThumbnail){ ?>
+                                            <img class="menucatimg rounded-md" src="<//?php echo $block->getUrl().$catThumbnail;?>" style="display: inline-block;"/>
+                                            <//?php }else{ ?>
+                                            <img class="menucatimg rounded-md" src="<//?php echo $placeholderimage;?>" style="display: inline-block;"/></a>
+                                            <//?php } ?> -->
+                                                                                                       
+                                           <?= $escaper->escapeHtml($itemLevel3['name']) ?></a>
+                                    </li>
+                                    <?php if($count>=6){break;}?>
+                                <?php endforeach; ?>
+                              </ul>
+                            <?php if(count($subMenuItem['childData'])>5){?>
+                                            <a class="text-size16 font-normal text-black underline pl-5 mt-2 mb-6 inline-block" href="<?= $escaper->escapeUrl($subMenuItem['url']) ?>" x-show="show"><?= $escaper->escapeHtml('View All') ?></a>
+                                            <?php }?> 
+                            <?php }?>
+                            
+                        <?php endforeach; ?>
+                    </div>
+                <?php endif; ?>
+
+                
+            </div>
+        <?php endforeach; ?>
+    </div>
+        </nav>
+    </div>
+</div>
+<script>
+    'use strict';
+
+    const initMenuMobile<?= $escaper->escapeHtml($uniqueId) ?> = () => {
+        return {
+            mobilePanelActiveId: null,
+            open: false,
+            setActiveMenu(menuNode) {
+                Array.from(menuNode.querySelectorAll('a')).filter(link => {
+                    return link.href === window.location.href.split('?')[0];
+                }).map(item => {
+                    item.classList.add('underline');
+                    item.closest('div.level-0') &&
+                    item.closest('div.level-0').querySelector('a.level-0').classList.add('underline');
+                });
+            }
+        }
+    }
+</script>

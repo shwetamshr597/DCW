@@ -1,0 +1,79 @@
+<?php if (count($block->getInstagramproGalleryImages())) {?>
+<div class="heading_instagram">Instagram Feed</div>
+<div class="outer w-full instagram_feed owl-carousel owl-theme"
+ x-data="instagramFeedAjaxCall()" x-init="initInstagramFeedFunc()">
+</div>
+
+    <?php
+    $body_data = 'query{getImageData(page: "Instagram"){status response}}';
+    ?>
+<script>
+function instagramFeedAjaxCall() {
+return {
+    instagram_feed:'',
+    initInstagramFeedFunc: function () {
+        fetch(BASE_URL+'graphql?form_key=' + hyva.getFormKey(), {
+            method: "POST",
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ query:'<?= /* @noEscape */ $body_data?>'}),
+        })
+        .then(response => {
+            if (! response.ok) console.warn('GET request failed');
+            return response.json();
+        })
+        .then(data => {
+            if (data) {
+                var get_instagram_feed = data.data.getImageData.response;
+                //this.instagram_feed =  get_instagram_feed;
+                //this.instagram_feed =  get_instagram_feed.replace(/\\/g, "");
+                console.log(get_instagram_feed);
+                this.instagram_feed = jQuery.parseJSON(get_instagram_feed);
+
+                var feed_html = '';
+                
+                this.instagram_feed.forEach(function (item) {
+                    feed_html += '<div class="category_box"><a href="'+item.link+'" target="_blank">';
+                    if(item.thumbnail_url && (item.media_type=='image' || item.media_type=='carousel_album')){
+                        feed_html += '<img class="feed_img" src="'+item.thumbnail_url+'"/>';
+                    }else if(item.thumbnail_url && item.media_type=='video'){
+                        feed_html += '<video class="feed_video" controls><source src="'+item.thumbnail_url+'" type="video/mp4"></video>';
+                    }
+                    feed_html += '<div class="insta_comments"><div class="feed_commens">'+item.image_comments+'</div>';
+                    feed_html += '<div class="feed_likes">'+item.image_likes+'</div></div>';
+                    feed_html += '</a></div>';
+                });
+
+                $('.instagram_feed').html(feed_html);
+            }
+        })
+        .finally(() => {
+            $(".instagram_feed").owlCarousel({
+                loop:false,
+                margin:25,
+                nav:true,
+                dots:false,
+                responsive:{
+                    0:{
+                        items:2,
+                        margin:12
+                    },
+                    767:{
+                        items:2,
+                        margin:12
+                    },
+                    1024:{
+                        items:3
+                    },
+                    1025:{
+                        items:4
+                    }
+                }
+                });
+        });
+    },
+    
+}
+}
+
+</script>
+<?php }?>

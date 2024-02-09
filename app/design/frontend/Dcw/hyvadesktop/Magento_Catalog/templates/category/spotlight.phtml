@@ -1,0 +1,154 @@
+<?php
+/**
+ * Copyright © Magento, Inc. All rights reserved.
+ * See COPYING.txt for license details.
+ */
+
+declare(strict_types=1);
+
+use Magento\Framework\Escaper;
+
+/**
+ * Category view template
+ *
+ * @var $block \Magento\Catalog\Block\Category\View
+ */
+
+/** @var Escaper $escaper */
+
+
+
+if(isset($_REQUEST['spotlight']) && $_REQUEST['spotlight']!='') { 
+$spotlightsku = $_REQUEST['spotlight'];
+$objectManager = \Magento\Framework\App\ObjectManager::getInstance();
+$productRepository = $objectManager->get('\Magento\Catalog\Model\ProductRepository');
+$product = $productRepository->get($spotlightsku);
+$productId = $product->getId();
+$parent_product = $objectManager->create('Magento\ConfigurableProduct\Model\ResourceModel\Product\Type\Configurable')->getParentIdsByChild($productId);
+$parent_id = $parent_product[0];
+$parentProduct = $objectManager->create('Magento\Catalog\Model\Product')->load($parent_id);
+$cantoImageHelper = $objectManager->get(\Dcw\ProductImage\Helper\Data::class);
+$imageDcwHelper = $objectManager->get(\Magento\Catalog\Helper\Image::class);
+$cantoImage = $cantoImageHelper->getMainImageUrl($product);
+$uniqueId = '_' . uniqid();
+$sampleblock= $block->getLayout()->createBlock(Dcw\SampleProduct\Block\SampleData::class);
+$abstractProductBlock = $block->getLayout()->createBlock('\Magento\Catalog\Block\Product\AbstractProduct');
+?>
+
+<script>
+function addToCartClickVerify() {
+var qty = 1;
+var price = '<?php echo $product->getFinalPrice();?>';
+var selected_option_child_id = '<?php echo $productId; ?>';
+fetch(BASE_URL+'flooring/index/cartpost?form_key=' + hyva.getFormKey(), {
+method: "POST",
+headers: { "content-type": "application/x-www-form-urlencoded; charset=UTF-8" },
+body: "main_product_id=<?= /* @noEscape */ $parent_id ?>&product_floor_type=Tire Price&selected_option_child_id="+selected_option_child_id+"&qty="+qty+"&custom_price="+price,
+})
+.then(response => { 
+window.dispatchEvent(new CustomEvent('reload-customer-section-data')); 
+})
+.then(data => {
+window.dispatchEvent(new CustomEvent('reload-customer-section-data'));
+window.dispatchEvent(new CustomEvent('amcart-loading-stop'));
+});
+}
+</script>
+
+<div class="spot-light">
+<div class="catergory_slider_content bg-white mb-6">
+    
+    <?php /* Product Image */ ?>
+    <a href="<?= $escaper->escapeUrl($parentProduct->getProductUrl()) ?>"
+        class="product photo product-item-photo block mx-auto w-full md:w-2/6 md:mb-0 md:mr-5"
+        tabindex="-1"
+    >
+    <?php
+    if ($cantoImage!="") {
+        $imagesDimensionMedium = $cantoImageHelper->getSmallImageDimension();
+        $mainImageData = $cantoImage.'/-B'.$imagesDimensionMedium;
+    } else {
+        $mainImageData = $imageDcwHelper->getDefaultPlaceholderUrl('small_image');
+    }
+?> 
+<img class="" src="<?php echo $mainImageData; ?>" alt="<?php echo $parentProduct->getName(); ?>" >
+    </a>
+    <input type="hidden" id="product_name_<?= (int)$productId ?>"  name="product_name_<?= (int)$productId ?>" value="<?= $product->getName() ?>">
+    <input type="hidden" id="product_id_<?= (int)$productId ?>"  name="product_id_<?= (int)$productId ?>" value="<?= $product->getId() ?>">
+    <input type="hidden" id="product_url_<?= (int)$productId ?>" name="product_url_<?= (int)$productId ?>" value="<?= $escaper->escapeUrl($product->getProductUrl()) ?>">
+    
+    <input type="hidden" id="image_url_<?= (int)$productId ?>" name="image_url_<?= (int)$productId ?>" value="<?=/** @noEscape */$mainImageData?>">
+    <div class="product-info flex flex-col grow py-3 px-3">
+        <a href="<?= $escaper->escapeUrl($parentProduct->getProductUrl()) ?>">    
+        
+            <div class="text-primary product-name md:text-left">
+                <span class="product-item-link text-size18 text-black font-semibold no-underline relative block"
+                    title="<?php echo $parentProduct->getName(); ?>">
+                    <?php echo $parentProduct->getName(); ?>
+                </span>
+            </div>
+        </a> 
+        <div class="spot-divide">
+           <div class="spot-innerleft"> 
+            <div class="price-label">
+                <span>Price</span>
+                <?php echo $abstractProductBlock->getProductPrice($product) ?>
+            </div>
+            <div class="color_counts pt-1">
+                <?php if ($parentProduct->getTypeId() == 'configurable') {
+                    $config_color_arr = [];
+                    $_children = $parentProduct->getTypeInstance()->getUsedProducts($parentProduct);
+                    foreach($_children as $_child){
+                        $config_color_arr[] = $_child->getColor();
+                    }
+                    if(!empty($config_color_arr)){
+                    ?>
+                    <div class="color_count text-size14 font-normal text-black">Available in <?= /* @noEscape */ count(array_unique($config_color_arr))?> colors</div>
+                    <?php
+                    }
+                }
+                ?>
+            </div>
+            </div>
+            <div class="spot-innerright"> 
+                <?php $color = $product->getAttributeText('color');
+                $tiles_size  = $product->getAttributeText('tiles_size'); ?>
+                <div class="text-size12 font-normal text-black spot-edit">QTY <span>1</span> - <a href="<?= $escaper->escapeUrl($parentProduct->getProductUrl()) ?>?color=<?php echo $product->getColor(); ?>&tiles_size=<?php echo $product->getTilesSize(); ?>">edit</a></div>
+                <?php if($tiles_size!='') { ?>
+                <div class="text-size12 font-normal text-black spot-edit"> <span><?php echo  $tiles_size ?></span> - <a href="<?= $escaper->escapeUrl($parentProduct->getProductUrl()) ?>?color=<?php echo $product->getColor(); ?>&tiles_size=<?php echo $product->getTilesSize(); ?>">edit</a></div> 
+                <?php  } ?>
+            <?php if($color!='') { ?>
+                <div class="text-size12 font-normal text-black spot-edit">Color <span><?php echo $color; ?></span> - <a href="<?= $escaper->escapeUrl($parentProduct->getProductUrl()) ?>?color=<?php echo $product->getColor(); ?>&tiles_size=<?php echo $product->getTilesSize(); ?>">edit</a></div> 
+                <?php } ?>  
+                <button type="button" form="product_addtocart_form" title="Add to Cart" class="btn btn-primary spot-button" id="product-addtocart-button" onclick="addToCartClickVerify()">
+                <span class=" sm:blocklg:block">Add to Cart </span>
+                </button>
+            </div>
+            </div>
+            <div class="spot-bottom">
+            <a href="<?= $escaper->escapeUrl($parentProduct->getProductUrl()) ?>" class="priceBlock spot-block">
+            <!-- <div class="text-gray-900"
+                x-data="initPriceBox_<?= /** @noEscape */ $uniqueId ?>()">
+                
+            </div> -->
+        
+            <?php if ($sampleblock->getsampleproductsku($parent_id)) {?>        
+            <div class="orderSampleContent" x-cloak x-data="{showModal: false, htmlContent: '',pid: <?=$parent_id?>}">
+            <button class="order_btn text-size12 font-medium text-black" type="button" x-on:click="showModal = true,fetchHtmlContent(pid), document.body.classList.add('order_active');"><?= $escaper->escapeHtml(__('Order Free Sample')) ?></button>
+            <div class="modal order-free-sample-popup" x-show="showModal">
+                <div class="modal-overlay" x-on:click="showModal = false"></div>
+                <button class="closemodal" type="button" x-on:click="showModal = false, document.body.classList.remove('order_active');">Close X</button>
+                <div class="modal-content">    
+                    <div x-html="htmlContent" class="htmlcontent<?=$parent_id?>"></div>
+                </div>
+            </div>
+        </div>
+        <?php }?>
+        <div class="shop-host">
+            <a href="<?= $escaper->escapeUrl($parentProduct->getProductUrl()) ?>" class="spot-shopnow">Shop Now </a>
+            </div>
+    </div>
+            </div>
+</div>
+</div>
+<?php } ?>

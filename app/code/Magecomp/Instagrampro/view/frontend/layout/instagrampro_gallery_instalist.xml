@@ -1,0 +1,12 @@
+<?xml version="1.0"?>
+<page xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" layout="1column" xsi:noNamespaceSchemaLocation="urn:magento:framework:View/Layout/etc/page_configuration.xsd">
+	  <head>
+		  <title>Instagram Feed</title>
+		  <script src="Magecomp_Instagrampro::js/jquery-1.12.1.min.js"/>
+	  </head>
+	  <body>
+			<referenceContainer name="content">
+			  	<block class="Magecomp\Instagrampro\Block\Homepage" template="Magecomp_Instagrampro::instagrampro/gallerylist.phtml" name="instagramprolistpage" cacheable="false"/>
+			</referenceContainer>
+	  </body>
+</page>

@@ -1,0 +1,182 @@
+<?php
+/**
+ * Hyvä Themes - https://hyva.io
+ * Copyright © Hyvä Themes 2020-present. All rights reserved.
+ * This product is licensed per Magento install
+ * See https://hyva.io/license
+ */
+
+declare(strict_types=1);
+
+use Magento\Catalog\Block\Product\View;
+
+/** @var View $block */
+
+$product = $block->getProduct();
+?>
+<section class="text-gray-700 body-font">
+    <div class="flex lg:flex-row flex-col items-center">
+        <div class="flex flex-wrap order-first w-full">
+            <?= $block->getChildHtml('product.media') ?>
+            <?= $block->getChildHtml('product.info') ?>
+        </div>
+    </div>
+</section>
+<section>
+    <?= $block->getChildHtml('product_options_wrapper_bottom') ?>
+</section>
+
+<?= $block->getChildHtml('product.info.details'); ?>
+
+<section>
+    <?= $block->getChildHtml('related') ?>
+    
+    <?= /* @noEscape */ $block->getChildHtml('amasty_faq_product_custom'); ?>
+
+    <?= $block->getChildHtml('upsell') ?>
+    <?= $block->getChildHtml('review_list') ?>
+    <?= $block->getChildHtml('review_form') ?>
+</section>
+
+<script>
+function makeMessagesSticky() {
+  const header = document.querySelector('#header');
+  const messages = document.querySelector('.page.messages #messages');
+  const page = document.querySelector('.page.messages');
+  const breadcrumbs = document.querySelector('.breadcrumbs');
+
+  const headerRect = header.getBoundingClientRect();
+  const messagesRect = messages.getBoundingClientRect();
+  const pageRect = page.getBoundingClientRect();
+  const breadcrumbsRect = breadcrumbs.getBoundingClientRect();
+
+  const bodyElement = document.querySelector('body');
+  const isSticky = bodyElement.classList.contains('sticki');
+
+  //var scrollTop = jQuery(window).scrollTop();
+  const gallery = document.querySelector('#gallery');
+  const galleryRect = gallery.getBoundingClientRect();
+  var productMainContentHeight = jQuery('.product-main-content').height();
+  //console.log('productMainContentHeight:'+productMainContentHeight);
+  var productMainContentHeight1 = productMainContentHeight / 2;
+  //console.log('productMainContentHeight1:'+productMainContentHeight1);
+  const productMainContent = document.querySelector('.product-main-content');
+  const productMainContentRect = productMainContent.getBoundingClientRect();
+
+  const middleSection1 = document.querySelector('.middle-section1');
+  const middleSection1Rect = middleSection1.getBoundingClientRect();
+
+  if (isSticky) {
+    if (pageRect.top <= headerRect.bottom) {
+        document.querySelector('.catalog-product-view .page.messages #messages').style.position = 'fixed';
+        document.querySelector('.catalog-product-view .page.messages #messages').style.top = `${headerRect.bottom}px`;
+        document.querySelector('.catalog-product-view .page.messages #messages').style.width = '100%';
+    } 
+    else {
+        document.querySelector('.catalog-product-view .page.messages #messages').style.position = 'static';
+        document.querySelector('.catalog-product-view .page.messages #messages').style.top = 'auto';
+    }
+
+    if (galleryRect.top <= headerRect.bottom) {
+        // jQuery('body').addClass('sticky');
+        jQuery('.catalog-product-view #gallery .middle-section').addClass('sticky');
+        document.querySelector('.catalog-product-view #gallery .middle-section').style.position = 'fixed';
+    }   
+    else{
+        jQuery('.catalog-product-view #gallery .middle-section').removeClass('sticky');
+        document.querySelector('.catalog-product-view #gallery .middle-section').style.position = 'static';
+        // document.querySelector('#gallery .middle-section').style.width = '100%';
+    }
+
+    var galleryHgt = jQuery('#gallery').height();
+    var thumbsHgt = jQuery('#thumbs').height();
+    var sliderHgt1 = galleryHgt - thumbsHgt - 350;
+    var scrollTop = jQuery(window).scrollTop();
+    var pdpIconContainer = jQuery('.pdp_icon_container').length;
+    //console.log('pdpIconContainer==='+pdpIconContainer);
+    if(pdpIconContainer == 0){
+        if (scrollTop >= ( sliderHgt1 - 100 )) {
+            jQuery('.catalog-product-view #gallery .middle-section').removeClass('sticky');
+            document.querySelector('.catalog-product-view #gallery .middle-section').style.position = 'static';
+            // document.querySelector('#gallery .middle-section').style.width = '100%';
+        }
+    }
+    if(pdpIconContainer > 0){
+        if (scrollTop >= ( sliderHgt1 - 370 ) ) {
+            jQuery('.catalog-product-view #gallery .middle-section').removeClass('sticky');
+            document.querySelector('.catalog-product-view #gallery .middle-section').style.position = 'static';
+            // document.querySelector('#gallery .middle-section').style.width = '100%';
+        }
+    }
+    // if (scrollTop >= sliderHgt1 ) {
+    //     jQuery('.page-product-configurable #gallery .middle-section').removeClass('sticky');
+    //     document.querySelector('.page-product-configurable #gallery .middle-section').style.position = 'static';
+    //     // document.querySelector('#gallery .middle-section').style.width = '100%';
+    // }
+
+    // if(productMainContentRect.bottom <= headerRect.bottom + productMainContentHeight1 + 300){
+    //     jQuery('body').removeClass('sticky');
+    // }
+
+  } 
+  else {
+    if (breadcrumbsRect.bottom <= 0) {
+      document.querySelector('.catalog-product-view .page.messages #messages').style.position = 'fixed';
+      document.querySelector('.catalog-product-view .page.messages #messages').style.top = '0';
+      document.querySelector('.catalog-product-view .page.messages #messages').style.width = '100%';
+    } else {
+      document.querySelector('.catalog-product-view .page.messages #messages').style.position = 'static';
+      document.querySelector('.catalog-product-view .page.messages #messages').style.top = 'auto';
+    }
+
+    //jQuery('body').removeClass('sticky');
+  }
+
+//   var galleryHgt = jQuery('#gallery').height();
+//   var thumbsHgt = jQuery('#thumbs').height();
+//   var sliderHgt1 = galleryHgt - thumbsHgt - 350;
+//   const isStickyNew = bodyElement.classList.contains('sticky');
+//   if(isStickyNew){
+//     var scrollTop = jQuery(window).scrollTop();
+//     if (scrollTop >= sliderHgt1 ) {
+//         document.querySelector('#gallery .middle-section').style.position = 'static';
+//         document.querySelector('#gallery .middle-section').style.width = '100%';
+//     }
+//     // else{
+//     //     jQuery("#floor_area_canvas_inn_content").removeClass("floor-sticky");
+//     // }
+//   }
+}
+window.addEventListener("scroll", function() {
+    makeMessagesSticky();
+    successMsgSticky();
+});
+
+function successMsgSticky(){
+    var headerHeight = jQuery('header.page-header').height();
+    var breadcrumbsHeight = jQuery('.breadcrumbs').height();
+    var hHgt = headerHeight + breadcrumbsHeight;
+    var mesgs = document.querySelector('.page.messages #messages');
+    var scrollTop = jQuery(window).scrollTop();
+
+    // console.log(`Header Height: ${headerHeight}px`);
+    // console.log(`breadcrumbs Height: ${breadcrumbsHeight}px`);
+    // console.log(`h Hgt: ${hHgt}`);
+
+    if (scrollTop >= hHgt) {
+        jQuery('body').addClass('scroll-reached-hHgt');
+    } 
+    else {
+        jQuery('body').removeClass('scroll-reached-hHgt');
+    }
+}
+window.addEventListener("resize load", function() {
+    successMsgSticky();
+});
+</script>    
+<style>
+    @media(max-width:1024px){
+        .catalog-product-view.scroll-reached-hHgt .page.messages .messages.container{position: static !important;}
+        .catalog-product-view.scroll-reached-hHgt .page.messages #messages{position: fixed !important;top: 0px !important;width: 100% !important;}
+    }
+</style>

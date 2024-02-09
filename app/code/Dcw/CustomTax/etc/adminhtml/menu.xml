@@ -1,0 +1,9 @@
+<?xml version="1.0"?>
+
+<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:module:Magento_Backend:etc/menu.xsd">
+    <menu>
+    
+		
+    <add id="Dcw_CustomTax::customtax_customtax" title="Import Custom Tax" module="Dcw_CustomTax" sortOrder="20" parent="Magento_Tax::sales_tax" action="customtax/customtax/new" resource="Dcw_CustomTax::customtax_customtax"/>
+    </menu>
+</config>

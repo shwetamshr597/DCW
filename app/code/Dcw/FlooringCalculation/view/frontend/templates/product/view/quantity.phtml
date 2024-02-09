@@ -1,0 +1,213 @@
+<?php
+/**
+ * Hyvä Themes - https://hyva.io
+ * Copyright © Hyvä Themes 2020-present. All rights reserved.
+ * This product is licensed per Magento install
+ * See https://hyva.io/license
+ */
+
+declare(strict_types=1);
+
+use Hyva\Theme\Model\ViewModelRegistry;
+use Hyva\Theme\ViewModel\ProductStockItem;
+use Magento\Catalog\Block\Product\View;
+use Magento\Catalog\Model\Product;
+use Magento\Framework\Escaper;
+use Hyva\Theme\ViewModel\ProductPrice;
+use Magento\Catalog\Pricing\Price\FinalPrice;
+use Magento\Catalog\Pricing\Price\RegularPrice;
+use Magento\Catalog\Pricing\Price\TierPrice;
+
+// phpcs:disable Generic.WhiteSpace.ScopeIndent.Incorrect
+
+/** @var View $block */
+/** @var Escaper $escaper */
+/** @var ViewModelRegistry $viewModels */
+
+/** @var Product $product */
+$product = $block->getProduct();
+
+/** @var ProductStockItem $stockItemViewModel */
+$stockItemViewModel = $viewModels->require(ProductStockItem::class);
+$minSalesQty        = $stockItemViewModel->getMinSaleQty($product);
+$maxSalesQty        = $stockItemViewModel->getMaxSaleQty($product);
+
+$maxSalesQtyLength  = ($maxSalesQty ? strlen((string) $maxSalesQty) : 4)
+    + (/* add one if decimal for separator */
+    (int) $stockItemViewModel->isQtyDecimal($product));
+
+$step = $stockItemViewModel->getQtyIncrements($product)
+    ? $stockItemViewModel->getQtyIncrements($product)
+    : null;
+
+$productPriceViewModel = $viewModels->require(ProductPrice::class);
+$regularPrice = $productPriceViewModel->getPriceValue(RegularPrice::PRICE_CODE, $product);
+$finalPrice = $productPriceViewModel->getPriceValue(FinalPrice::PRICE_CODE, $product);
+
+?>
+<?php if ($block->shouldRenderQuantity()): ?>
+    <script>
+        function initQtyField() {
+
+            function findPathParam(key) {
+                // get all path pairs after BASE_URL/front_name/action_path/action
+                const baseUrl = (BASE_URL.substr(0, 2) === '//' ? 'http:' : '') + BASE_URL;
+                const baseUrlParts = (new URL(baseUrl)).pathname.replace(/\/$/, '').split('/');
+                const pathParts = window.location.pathname.split('/').slice(baseUrlParts.length + 3);
+                for (let i = 0; i < pathParts.length; i += 2) {
+                    if (pathParts[i] === key && pathParts.length > i) {
+                        return pathParts[i + 1];
+                    }
+                }
+            }
+
+            return {
+                qty: <?= $block->getProductDefaultQty() * 1 ?>,
+                itemId: (new URLSearchParams(window.location.search)).get('id') || findPathParam('id'),
+                productId: '<?= (int)$product->getId() ?>',
+                <?php // populate the qty when editing a product from the cart ?>
+                onGetCartData: function onGetCartData(data, $dispatch) {
+                    const cart = data && data.data && data.data.cart;
+                    const quotecart = data && data.data && data.data.quotecart; 
+                    if (this.itemId && cart && cart.items || this.itemId && quotecart && quotecart.items) {
+                        const cartItem = cart.items.find((item) => {
+                            return item.item_id === this.itemId && item.product_id === this.productId;
+                        });
+                        const quotecartItem = quotecart.items.find((item) => {
+                            return item.item_id === this.itemId && item.product_id === this.productId;
+                        });
+                        if (cartItem && cartItem.qty) { 
+                            this.qty = cartItem.qty;
+                            this.total_qty = cartItem.qty;
+                        } else  {  
+                            this.qty = quotecartItem.qty;
+                            this.total_qty = quotecartItem.qty;  
+                        }
+                        this.total_price = hyva.formatPrice(
+                                                        parseFloat(this.total_qty) *
+                                                        (parseFloat(this.final_price)).toFixed(2)
+                                                        );
+                        this.total_regular_price = hyva.formatPrice(
+                                                            parseFloat(this.total_qty) *
+                                                            (parseFloat(this.regular_price)).toFixed(2)
+                                                            );
+                        $dispatch('update-qty-' + this.productId, this.qty);
+                        
+                    }
+                }
+            };
+        }
+        
+        function flooringCalcDetails() {
+                return {
+                    final_price: <?= (float)$finalPrice ?>,
+                    regular_price: <?= (float)$regularPrice ?>,
+                    total_qty: 1,
+                    total_price:'',
+                    total_regular_price:'',
+                    qtyUpdate:  function () {
+                         if (this.total_qty < 1 ||this.total_qty == '') {
+                                this.total_qty = 1;
+                            }
+                        this.calc_total_qty_sqft_price_func(this.total_qty);
+                    },
+                    decrement:  function () {
+                        if (this.total_qty > 1) {
+                                this.total_qty--;
+                            }
+                        this.calc_total_qty_sqft_price_func(this.total_qty);
+                    },
+                    increment:  function () {
+                        this.total_qty++;
+                        this.calc_total_qty_sqft_price_func(this.total_qty);
+                    },
+                    updateTotalQtySqftPriceOnPageLoad:  function () {
+                         this.calc_total_qty_sqft_price_func(1);
+                    },
+                    calc_total_qty_sqft_price_func:   function (qty_calc) {
+                    
+                        this.total_qty = qty_calc;
+                        this.total_price = hyva.formatPrice(
+                                                            parseFloat(qty_calc) *
+                                                            (parseFloat(this.final_price)).toFixed(2)
+                                                            );
+                        this.total_regular_price = hyva.formatPrice(
+                                                                    parseFloat(qty_calc) *
+                                                                    (parseFloat(this.regular_price)).toFixed(2)
+                                                                    );
+                    },
+                    addToCartClickVerify:   function () {
+                        document.getElementById('product-addtocart-button').click();
+                        if (document.querySelector('.related-product-dialog-wrapper')) {
+                            window.addEventListener('reload-customer-section-data', event =>{
+                                window.dispatchEvent(
+                                    new CustomEvent('hyva-modal-show', {detail: {dialog: 'related-product-slider-dialog'}})
+                                );
+                            });
+                        }
+                    }
+                }
+        }
+        
+    </script>
+    
+    <div class="all_total_calc_section">
+        <div x-data="initQtyField()"
+            class="quantity-container flex items-center mb-6">
+            <?php if ($product->isSaleable()): ?>
+                <div class="flex items-center">
+                    <label for="qty[<?= (int)$product->getId() ?>]"
+                        class="inter text-size18 font-semibold text-black md:mr-5"
+                    >
+                        <?= $escaper->escapeHtml(__('Quantity')) ?>
+                    </label>
+                    <?php if ($product->getFreeTshirt() != 1) {?>
+                        <button x-on:click="decrement()" class="qty-decrement inter text-size18 font-semibold text-black md:mr-5">-</button>
+                    <?php }?>
+                    <input name="qty"
+                        @private-content-loaded.window="onGetCartData($event.detail, $dispatch)"
+                        id="qty[<?= (int)$product->getId() ?>]"
+                        form="product_addtocart_form"
+                        <?php if ($stockItemViewModel->isQtyDecimal($product)): ?>
+                        type="text"
+                        pattern="[0-9](\.[0-9])?{0,<?= /** @noEscape */ $maxSalesQtyLength ?>}'"
+                        inputmode="decimal"
+                        <?php else: ?>
+                        type="text"
+                        pattern="[0-9]{0,<?= /** @noEscape */ $maxSalesQtyLength ?>}"
+                        inputmode="numeric"
+                        <?php if ($minSalesQty): ?>min="<?= /** @noEscape */ $minSalesQty ?>"<?php endif; ?>
+                        <?php if ($maxSalesQty): ?>max="<?= /** @noEscape */ $maxSalesQty ?>"<?php endif; ?>
+                        <?php if ($step): ?>step="<?= /** @noEscape */ $step ?>"<?php endif; ?>
+                        <?php endif; ?>
+                        :value="qty"
+                        class="form-input md:mr-5 bg-transparent invalid:ring-2 invalid:ring-red-500"
+                        x-model.number="total_qty"
+                        x-on:change="qtyUpdate"
+                        <?= ($product->getFreeTshirt() == 1)?'readonly disabled':''; ?>
+                        @change="$dispatch('update-qty-<?= (int)$product->getId() ?>', qty)"
+                    />
+                    <?php if ($product->getFreeTshirt() != 1) {?>
+                        <button x-on:click="increment()" class="qty-increment inter text-size18 font-semibold text-black">+</button>
+                    <?php }?>
+                </div>
+            <?php endif; ?>
+        </div>
+        
+        <div class="price-summary-container flex justify-between bg-white rounded-md relative">
+            <div class="left">
+                <div class="total-case">
+                    <span x-text="total_qty" class="inter text-size28 font-medium text-black mr-1"></span>
+                </div>
+            </div>
+            <div class="right your_price flex">
+                <div class="inter text-size16 font-medium text-black price_left">Your price</div>
+                <div class="total-price-info ml-6">
+                    <div class="total-regular-price inter line-through text-size14 font-normal text-custom-blue"
+                         x-show="total_price!=total_regular_price" x-text="total_regular_price"></div>
+                    <div class="total-price inter text-size21 font-bold text-custom-blue" x-text="total_price"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+<?php endif; ?>

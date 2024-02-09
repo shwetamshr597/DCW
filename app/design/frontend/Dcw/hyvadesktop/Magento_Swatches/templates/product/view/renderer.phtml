@@ -1,0 +1,350 @@
+<?php
+/**
+ * Hyvä Themes - https://hyva.io
+ * Copyright © Hyvä Themes 2020-present. All rights reserved.
+ * This product is licensed per Magento install
+ * See https://hyva.io/license
+ */
+
+use Hyva\Theme\Model\ViewModelRegistry;
+use Hyva\Theme\ViewModel\SwatchRenderer;
+use Magento\Framework\Escaper;
+use Magento\Swatches\Block\Product\Renderer\Configurable;
+use Magento\Swatches\ViewModel\Product\Renderer\Configurable as ConfigurableViewModel;
+
+// phpcs:disable Generic.Files.LineLength.TooLong
+
+/** @var Configurable $block */
+/** @var Escaper $escaper */
+/** @var ViewModelRegistry $viewModels */
+
+/** @var ConfigurableViewModel $configurableViewModel */
+$configurableViewModel = $viewModels->require(ConfigurableViewModel::class);
+
+/** @var SwatchRenderer $swatchRendererViewModel */
+$swatchRendererViewModel = $viewModels->require(SwatchRenderer::class);
+
+$product = $block->getProduct();
+$productId = $product->getId();
+
+$attributes = $block->decorateArray($block->getAllowAttributes());
+
+$layout = $block->getLayout();
+$swatchItemBlock = $layout->getBlock('product.swatch.item.dcw');
+$swatchItemBlock->setData('product_id', $productId);
+
+$tooltipBlockHtml = $block->getBlockHtml('product.swatch.tooltip');
+
+$quickShipBlock = $block->getLayout()->createBlock(\Dcw\FlooringCalculation\Block\Quickship::class);
+?>
+<?php if ($product->isSaleable() && count($attributes)): ?>
+    <script>
+        function initConfigurableSwatchOptions_<?= (int) $productId ?>() {
+            const configurableOptionsComponent = initConfigurableOptions(
+                '<?= (int) $productId ?>',
+                <?= /* @noEscape */ $block->getJsonConfig() ?>
+            );
+            const swatchOptionsComponent = initSwatchOptions(
+                <?= /* @noEscape */ $block->getJsonSwatchConfig() ?>
+            );
+
+            return Object.assign(
+                configurableOptionsComponent,
+                swatchOptionsComponent
+            );
+        }
+    </script>
+
+    <?php 
+$customactive = 0;
+if ($product->getAttributeText('product_floor_type') == 'Trailer Rolls') {
+$productConfiAttValues = array();
+$_children = $product->getTypeInstance()->getUsedProducts($product);
+foreach ($_children as $child){
+    $productConfiAttValues[$child->getRollCutType()][]=$child->getColor();
+     $productConfiAttValues[$child->getRollCutType()][]=$child->getTailerRollWidth();
+     $productConfiAttValues[$child->getRollCutType()][]=$child->getProductOption();
+}
+//echo '<pre>';print_r( $productConfiAttValues);
+$attributeCode = 'roll_cut_type';
+$ob = \Magento\Framework\App\ObjectManager::getInstance();
+$eavConfig = $ob->get(\Magento\Eav\Model\Config::class);
+$rollCutAtt = $eavConfig->getAttribute('catalog_product', $attributeCode);
+?>
+
+ <?php 
+
+ $selectedoption=0;
+ if ($rollCutAtt->usesSource()) {
+    $options = $rollCutAtt->getSource()->getAllOptions(false);
+    $i=0;
+
+    foreach ($options as $option) {
+        $opvalue=$option['value'];
+        if(isset($productConfiAttValues[$opvalue])){
+            $selectedoption=$opvalue;
+            $i=$i+1;
+            break;
+        }
+
+       
+     }
+}
+
+ $selectedvalues='';
+if(isset($productConfiAttValues[$selectedoption])){
+ $selectedvalues= implode(',', $productConfiAttValues[$selectedoption]);
+}
+
+?>
+
+<div class="roll_length_tab_wrapper bg-white w-full" x-data="{ activeTab: '<?=$selectedoption?>', activeoptions: [<?= $selectedvalues?>], customactive:0 }">
+<div class="roll_length_tab_heading flex items-center" >
+  
+    <?php 
+	$customactive = 0;
+	if ($rollCutAtt->usesSource()) {
+    $options = $rollCutAtt->getSource()->getAllOptions(false);
+    $i=0;
+    foreach ($options as $option) {
+        $selectedoption=$option['value'];
+        if(isset($productConfiAttValues[$selectedoption])){
+        $selectedvalues= implode(',', $productConfiAttValues[$selectedoption]);
+        $pricetext='/roll';
+        $customactive=1;
+        if($option['label']=='Custom Cut Rolls'){
+            $pricetext='/linear foot';
+            $customactive=1;
+        }
+    }
+        ?> 
+    <a class="w-1/2" @click="document.getElementById('pertext').innerHTML ='<?=$pricetext?>',  customactive=<?=$customactive?>, activeTab = '<?=$option['value']?>', activeoptions=[<?=$selectedvalues?>], customLengthAutoClick('<?=$option['label']?>') " :class="{ 'active': activeTab === '<?=$option['value']?>' }" ><?=$option['label']?></a>
+    <?php 
+     }
+}
+?>
+</div>
+<?php }
+
+?>
+<input type="hidden" id="selectcustomroollength"  value= "<?php echo $customactive;?>" />
+ 
+    <div x-data="initConfigurableSwatchOptions_<?= (int) $productId ?>()"
+         x-init="init(); initShowSwatchesIntersect();"
+         @private-content-loaded.window="onGetCartData($event.detail.data)"
+         class="relative mb-6 colors_swat roll_length_tab_content"
+    >
+        <!-- <h2 class="mb-4 text-xl font-medium text-gray-900 title-font">
+            <//?= $escaper->escapeHtml(__('Product Options:')) ?>
+        </h2> -->
+        <div>
+
+        <?php /* =================================== Quick Ship Colors  START ============================================== */?>
+        <?php if (count($quickShipBlock->getQuickShipProduct($productId)) > 0) { ?>
+            <?php foreach ($attributes as $attribute): ?>
+                <?php $attributeId = $attribute->getAttributeId(); ?>
+                <?php
+                 $productAttribute = $attribute->getProductAttribute();  
+                 $attributeCode = $productAttribute->getAttributeCode();
+                ?>
+                <?php if ($swatchRendererViewModel->isSwatchAttribute($productAttribute) && $productAttribute->getAttributeCode() == 'color'): ?>
+                    <div class="swatch-attribute 
+                            <?= $escaper->escapeHtmlAttr($productAttribute->getAttributeCode()) ?>">
+                        <template x-if="showSwatches">
+                            <div class="w-full color_swatches mb-10">
+
+                                <label class="w-full label product-option-label text-size18 font-semibold text-black"
+                                       for="attribute<?= $escaper->escapeHtmlAttr($productAttribute->getAttributeCode()) ?>"
+                                >
+                                    <span>Quick Ship Colors</span>
+                                </label>
+                                <div class="w-full product-option-values">
+                                    <div
+                                         class="flex items-center swatch-attribute-options"
+                                         role="radiogroup"
+                                    >
+                                        <template
+                                            x-for="(item, index) in optionConfig.attributes[<?= (int) $attributeId ?>].options"
+                                            :key="item.id"
+                                        >
+                                        
+                                        <div class="selectOptionColor" :class="{ 'hidden': quickShipValidation('<?= $attributeCode ?>', <?= (int) $attributeId ?>, item.id) != 1}">
+                                            <template x-if="optionIsEnabled(<?= (int) $attributeId ?>, item.id) && optionIsActive(<?= (int) $attributeId ?>, item.id)">
+                                                <label :id="'swatch-label-box-<?= (int) $attributeId ?>-'+item.id"
+                                                    :for="'attribute-option-<?= (int) $productId ?>-'+item.id"
+                                                    class="swatch-option relative cursor-pointer product-option-value-label"
+                                                    :class="{
+                                                        'checked':
+                                                            (selectedValues[<?= (int)$attributeId ?>] === item.id),
+                                                        'border-container-darker':
+                                                            (selectedValues[<?= (int)$attributeId ?>] !== item.id),
+                                                        'w-6 h-6' : !isTextSwatch(<?= (int) $attributeId ?>, item.id),
+                                                        'border-container-lighter ring ring-primary/75' : focusedLabel === item.id
+                                                    }"
+                                                    :style="getSwatchBackgroundStyle('<?= (int) $attributeId ?>',item.id)"
+                                                    <?php if ($configurableViewModel->getShowSwatchTooltip()): ?>
+                                                        @mouseenter.self="activeTooltipItem = {
+                                                            attribute: '<?= (int) $attributeId ?>',
+                                                            item: item.id
+                                                        }; tooltipPositionElement = $event.target;"
+                                                        @mouseleave.self="activeTooltipItem = false"
+                                                    <?php endif; ?>
+                                                >
+                                                    <input
+                                                        :id="'attribute-option-<?= (int) $productId ?>-'+item.id"
+                                                        :value="item.id"
+                                                        name="super_attribute[<?= (int) $attributeId ?>]"
+                                                        type="radio"
+                                                        class="inline-block absolute p-0 border-0 focus:border-0 focus:ring-0 product-option-value-input"
+                                                        data-attributecode="<?= /* @noEscape */ $attributeCode?>"
+                                                        style="z-index:-1"
+                                                        x-on:focus="focusLabel(item.id)"
+                                                        x-on:blur="blurLabel()"
+                                                        x-on:change="changeOption(<?= (int) $attributeId ?>, $event.target.value)"
+                                                        x-model="selectedValues[<?= (int) $attributeId ?>]"
+                                                        :required="getAllowedAttributeOptions(<?= (int) $attributeId ?>).filter(
+                                                                                                            attributeOption => selectedValues[attributeOption]
+                                                                                                        ).length === 0"
+                                                    >
+                                                                                                
+                                                    <div class="whitespace-normal selectOptionContent" :class="{ 'sr-only' : !isTextSwatch(<?= (int) $attributeId ?>, item.id) }">
+                                                        <span x-html="getSwatchText(<?= (int) $attributeId ?>, item.id)"></span>
+                                                        
+                                                    </div>
+                                                </label>
+                                            </template>
+
+                                            <template x-if="optionIsEnabled(<?= (int) $attributeId ?>, item.id) && !optionIsActive(<?= (int) $attributeId ?>, item.id)">
+                                                <div
+                                                    class="relative border-2 shadow-sm opacity-50 cursor-pointer select-none border-container-darker swatch-option bg-container-lighter"
+                                                    :class="{
+                                                                                                'w-6 h-6' : !isTextSwatch(<?= (int) $attributeId ?>, item.id),
+                                                                                            }"
+                                                    :style="getSwatchBackgroundStyle('<?= (int) $attributeId ?>',item.id)"
+                                                >
+                                                    <div class="whitespace-nowrap selectOptionContent" :class="{ 'sr-only' : !isTextSwatch(<?= (int) $attributeId ?>, item.id) }">
+                                                        <span x-html="getSwatchText(<?= (int) $attributeId ?>, item.id)"></span>
+                                                    </div>
+                                                    <svg class="absolute inset-0 w-full h-full text-gray-500 bg-white/25">
+                                                        <line x1="0" y1="100%" x2="100%" y2="0" class="stroke-current stroke-1"></line>
+                                                    </svg>
+                                                </div>
+                                            </template>
+                                        </div>
+                                        
+                                        </template>
+                                    </div>
+                                </div>
+                            </div>
+                        </template>
+                    </div>  
+                <?php endif; ?>
+            <?php endforeach; ?>
+        <?php } ?>
+        <?php /* =================================== Quick Ship Colors  END ============================================== */?>
+
+            <?php foreach ($attributes as $attribute): ?>
+                <?php $attributeId = $attribute->getAttributeId(); ?>
+                <?php $productAttribute = $attribute->getProductAttribute();  ?>
+                <?php if ($swatchRendererViewModel->isSwatchAttribute($productAttribute)): ?>
+                    <div class="swatch-attribute 
+                            <?= $escaper->escapeHtmlAttr($productAttribute->getAttributeCode()) ?>">
+                        <template x-if="showSwatches">
+                            <div class="w-full color_swatches mb-10">
+
+                                <label class="w-full label product-option-label text-size18 font-semibold text-black"
+                                       for="attribute<?= $escaper->escapeHtmlAttr($productAttribute->getAttributeCode()) ?>"
+                                >
+                                    <span>
+                                        <?php
+                                        if ($productAttribute->getAttributeCode() == 'color') {
+                                            echo 'Select A Color';
+                                        } elseif ($productAttribute->getAttributeCode() == 'product_option') {
+                                            echo 'Select an Option';
+                                        } else {
+                                            echo $escaper->escapeHtml($productAttribute->getStoreLabel());
+                                        }
+                                        ?>
+                                    </span>
+                                </label>
+                                <div class="w-full product-option-values">
+                                    <div
+                                         class="flex items-center swatch-attribute-options"
+                                         role="radiogroup"
+                                    >
+                                        <template
+                                            x-for="(item, index) in optionConfig.attributes[<?= (int) $attributeId ?>].options"
+                                            :key="item.id"
+                                        >
+                                        <?php if ($product->getAttributeText('product_floor_type') == 'Trailer Rolls') {?>
+                                        <span  x-show="activeoptions.includes(parseInt(item.id))" @click="console.log(item)">
+                                            <div x-data="{showcustominput: 0}">
+                                            <div @click="showcustominput = 1"> 
+                                             <?= /* @noEscape */ $swatchItemBlock->setData('attribute_id', $attributeId)->toHtml(); ?>
+                                           </div>
+                                             <template x-if="item.label=='Custom Length'" >
+                                            <div x-show="showcustominput" class="custom_length"> 
+                                              <input name="customrool_length" id="customrool_length" value="" type="text" placeholder="0"
+                    x-model="customrool_length" x-on:blur="customroolLengthWidthKeyup" @keyup.enter="customroolLengthWidthKeyup"
+                    autocomplete="off" class="form-text text-size14 font-normal text-black" />
+                    
+                                            <span class="text-size14 font-medium text-black">Any size between <?=$product->getMinRollcut()?>' and <?=$product->getMaxRollLengthRestriction()?>'</span>
+                                          </div>
+                                         </template>
+                                         </div>
+                                        </span>
+
+                                        <?php }else{ ?> 
+                                            <?= /* @noEscape */ $swatchItemBlock->setData('attribute_id', $attributeId)->toHtml(); ?>
+                                        <?php } ?> 
+                                        </template>
+                                    </div>
+                                </div>
+                            </div>
+                        </template>
+                    </div>
+                <?php else: ?>
+                    <div class="flex items-center py-2 w-full border-t border-gray-300 last:border-b">
+                        <label class="w-1/2 text-left text-gray-700 label"
+                               for="attribute<?= $escaper->escapeHtmlAttr($attribute->getAttributeId()) ?>"
+                        >
+                            <span>
+                                <?= $escaper->escapeHtml($attribute->getProductAttribute()->getStoreLabel()) ?>
+                            </span>
+                        </label>
+                        <div class="ml-2 w-1/2 text-left text-gray-900">
+                            <select name="super_attribute[<?= $escaper->escapeHtmlAttr($attribute->getAttributeId()) ?>]"
+                                    id="attribute<?= $escaper->escapeHtmlAttr($attribute->getAttributeId()) ?>"
+                                    class="form-select super-attribute-select"
+                                    x-on:change="changeOption(<?= (int) $attribute->getAttributeId() ?>, event.target.value)"
+                                    required="required">
+                                <option value="">
+                                    <?= $escaper->escapeHtml(__('Choose an Option...')) ?>
+                                </option>
+                                <template
+                                    x-for="(item, index) in getAllowedAttributeOptions(<?= (int) $attribute->getAttributeId() ?>)"
+                                    :key="item.id"
+                                >
+                                    <option
+                                        :value="item.id"
+                                        x-html="item.label"
+                                        :selected="selectedValues[<?= $escaper->escapeHtmlAttr($attribute->getAttributeId()) ?>] ===
+                                item.id">
+                                    </option>
+                                </template>
+                            </select>
+                        </div>
+                    </div>
+                <?php endif; ?>
+            <?php endforeach; ?>
+        </div>
+        <?= /* @noEscape */ $tooltipBlockHtml ?>
+    </div>
+<?php if ($product->getAttributeText('product_floor_type') == 'Trailer Rolls') {?>
+    </div>
+<?php } ?>
+
+<?php endif;?>
+<style>
+    .customlength{display:none;}
+</style>

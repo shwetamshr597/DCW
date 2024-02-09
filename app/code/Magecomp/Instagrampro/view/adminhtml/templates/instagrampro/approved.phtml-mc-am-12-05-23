@@ -1,0 +1,145 @@
+<div class="insta-content-header">
+    <h3 class="icon-head head-products"><?php echo __('Approved Instagram Images') ?></h3>
+</div>
+<div id="imagediv">
+    <img src="<?php echo $block->getViewFileUrl('Magecomp_Instagrampro::images/spinner.gif'); ?>" alt="Wait Image" />
+</div>
+<div>
+    <?php foreach ($block->getImages() as $image):
+        if ($image->getMediaType() == "image") { ?>
+        <div class="item" id="<?php echo $image->getImageId(); ?>" style="width:150px;margin:10px; text-align:center; float:left;">
+            <p class="insta-tag"><?php echo $block->getUpdateType().$image->getTag(); ?></p>
+            <img data-src="<?php echo $image->getThumbnailUrl(); ?>" src="<?php echo $block->getPlaceHolderImage(); ?>" alt="<?php echo $image->getTag() ?>" class="lazy" style="height: 150px;"/>
+            <br>
+            <a class="delete-link" style="float:right;" onclick="return deleteImage('<?php echo $image->getImageId(); ?>');" href="javascript:void(0);">Delete</a>
+        </div>
+                    <?php } else { ?>
+         <div class="item" id="<?php echo $image->getImageId(); ?>" style="width:150px;margin:10px; text-align:center; float:left;">
+             <p class="insta-tag"><?php echo $block->getUpdateType().$image->getTag(); ?></p>
+            <video width="150" height="150" controls>
+              <source src="<?php echo $image->getThumbnailUrl(); ?>" type="video/mp4">
+              
+              <?php echo __('Your browser does not support the video tag.') ?>
+            </video>
+            <br>
+            <a class="delete-link" style="float:right;" onclick="return deleteImage('<?php echo $image->getImageId(); ?>');" href="javascript:void(0);">Delete</a>
+        </div><?php } ?>
+    <?php endforeach; ?>
+    <div style="clear:both;"></div>
+</div>
+
+<script type="text/javascript">
+    !function(window){
+        var $q = function(q, res){
+                if (document.querySelectorAll) {
+                    res = document.querySelectorAll(q);
+                } else {
+                    var d=document
+                        , a=d.styleSheets[0] || d.createStyleSheet();
+                    a.addRule(q,'f:b');
+                    for(var l=d.all,b=0,c=[],f=l.length;b<f;b++)
+                        l[b].currentStyle.f && c.push(l[b]);
+
+                    a.removeRule(0);
+                    res = c;
+                }
+                return res;
+            }
+            , addEventListener = function(evt, fn){
+                window.addEventListener
+                    ? this.addEventListener(evt, fn, false)
+                    : (window.attachEvent)
+                    ? this.attachEvent('on' + evt, fn)
+                    : this['on' + evt] = fn;
+            }
+            , _has = function(obj, key) {
+                return Object.prototype.hasOwnProperty.call(obj, key);
+            }
+        ;
+
+        function loadImage (el, fn) {
+            var img = new Image()
+                , src = el.getAttribute('data-src');
+            img.onload = function() {
+                if (!! el.parent)
+                    el.parent.replaceChild(img, el);
+                else
+                    el.src = src;
+
+                fn? fn() : null;
+            };
+            img.src = src;
+        }
+
+        function elementInViewport(el) {
+            var rect = el.getBoundingClientRect();
+
+            return (
+                rect.top    >= 0
+                && rect.left   >= 0
+                && rect.top <= (window.innerHeight || document.documentElement.clientHeight)
+            )
+        }
+
+        var images = new Array()
+            , query = $q('img.lazy')
+            , processScroll = function(){
+                for (var i = 0; i < images.length; i++) {
+
+                    if (elementInViewport(images[i])) {
+                        loadImage(images[i], function () {
+
+                            images.splice(i, i);
+                        });
+                    }
+                };
+            }
+        ;
+        // Array.prototype.slice.call is not callable under our lovely IE8
+        for (var i = 0; i < query.length; i++) {
+            images.push(query[i]);
+        };
+
+        processScroll();
+        addEventListener('scroll',processScroll);
+
+    }(this);
+function deleteImage(Imgid) 
+  {
+
+
+
+
+      var formurl = '<?php echo $block->getUrl('*/*/deleteapproved'); ?>'; 
+      jQuery.ajax({
+          type: "GET",
+          url: formurl,
+          data: {isAjax: 1, id: Imgid},
+          beforeSend: function()
+          {
+              jQuery('#imagediv').show();
+          }, 
+          success: function(transport) 
+          {
+              var response = transport;
+              jQuery('#imagediv').hide();
+              if (response.success == 'success') 
+              {
+                  jQuery('#'+Imgid).remove();
+                  return true;
+              } 
+              else 
+              {
+                   alert('<?php echo __('Unknown Error. Please try again later.'); ?>');
+                  return false;
+              }
+          },
+          error: function() 
+          {
+              jQuery('#imagediv').hide();
+              alert('<?php echo __('Server Error. Please try again.') ?>');
+              return false;
+          }
+     });
+  }
+</script>

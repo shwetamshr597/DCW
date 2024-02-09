@@ -1,0 +1,18 @@
+<?xml version="1.0"?>
+<page xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" layout="admin-2columns-left" xsi:noNamespaceSchemaLocation="urn:magento:framework:View/Layout/etc/page_configuration.xsd">
+    <update handle="instagrampro_proindex_edit"/>
+    <body>
+        <referenceContainer name="content">
+            <block class="Magecomp\Instagrampro\Block\Adminhtml\Proindex\Edit" name="instagrampro_proindex_edit"/>
+        </referenceContainer>
+		<referenceContainer name="left">
+            <block class="Magecomp\Instagrampro\Block\Adminhtml\Proindex\Edit\Tabs" name="instagrampro_proindex_edit_tabs">
+				<block class="Magecomp\Instagrampro\Block\Adminhtml\Proindex\Edit\Tab\Form" name="instagrampro_proindex_edit_tabs_form" />
+				<action method="addTab">
+                    <argument name="name" xsi:type="string">form_section</argument>
+                    <argument name="block" xsi:type="string">instagrampro_proindex_edit_tabs_form</argument>
+                </action>
+			</block>
+        </referenceContainer>
+	</body>
+</page>

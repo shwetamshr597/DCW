@@ -1,0 +1,57 @@
+<?xml version="1.0"?>
+<schema xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:framework:Setup/Declaration/Schema/etc/schema.xsd">
+    <table name="instagrampro_image" resource="default" engine="innodb" comment="Magecomp Instagrampro Image">
+        <column xsi:type="int" name="instagrampro_image_id" identity="true" unsigned="true" nullable="false" comment="ID"/>
+        <column xsi:type="varchar" name="image_id" nullable="false" length="255" comment="Image Id"/>
+        <column xsi:type="text" name="username" nullable="false" comment="Username"/>
+        <column xsi:type="text" name="caption_text" nullable="false" comment="Caption Text"/>
+        <column xsi:type="text" name="media_type" nullable="false" comment="Media Type"/>
+        <column xsi:type="text" name="standard_resolution_url" nullable="false" comment="Standard Resolution Url" />
+        <column xsi:type="text" name="thumbnail_url" nullable="false" comment="Thumbnail url" />
+        <column xsi:type="text" name="tag" nullable="false" comment="Tag Value"/>
+        <column xsi:type="smallint" name="is_approved" nullable="false" default="0" comment="Is Approved" />
+        <column xsi:type="smallint" name="is_visible" nullable="false" default="1" comment="Is Visible on Backend and Frontend"/>
+        <column xsi:type="text" name="image_link"  comment="Image Link Url"/>
+        <column xsi:type="text" name="image_title" comment="Image Title" />
+        <column xsi:type="text" name="image_desc" comment="Image Description"/>
+        <column xsi:type="text" name="title1" comment="Image Title 1"/>
+        <column xsi:type="text" name="titlelink1" comment="Image Title 1 Link Url" />
+        <column xsi:type="text" name="title2" comment="Image Title 2"/>
+        <column xsi:type="text" name="titlelink2" comment="Image Title 2 Link Url"/>
+        <column xsi:type="text" name="title3" comment="Image Title 3" />
+        <column xsi:type="text" name="titlelink3" comment="Image Title 3 Link Url"/>
+        <column xsi:type="text" name="title4" comment="Image Title 4"/>
+        <column xsi:type="text" name="titlelink4" comment="Image Title 4 Link Url" />
+        <column xsi:type="text" name="title5" comment="Image Title 5"/>
+        <column xsi:type="text" name="titlelink5" comment="Image Title 5 Link Url" />
+
+        <column xsi:type="text" name="title1x" comment="Title 1x" />
+        <column xsi:type="text" name="title1y" comment="Title 1y"/>
+        <column xsi:type="text" name="title2x" comment="Title 2x"/>
+        <column xsi:type="text" name="title2y" comment="Title 2y" />
+        <column xsi:type="text" name="title3x" comment="Title 3x"/>
+        <column xsi:type="text" name="title3y" comment="Title 3y" />
+        <column xsi:type="text" name="title4x" comment="Title 4x" />
+        <column xsi:type="text" name="title4y" comment="Title 4y"/>
+        <column xsi:type="text" name="title5x" comment="Title 5x"/>
+        <column xsi:type="text" name="title5y" comment="Title 5y" />
+        <column xsi:type="text" name="image_likes" comment="Image Likes"/>
+        <column xsi:type="text" name="title6" comment="Image Title 6" />
+        <column xsi:type="text" name="titlelink6" comment="Image Title 6 Link Url"/>
+        <column xsi:type="text" name="title6x" comment="Title 6x"/>
+        <column xsi:type="text" name="title6y" comment="Title 6y" />
+        <column xsi:type="text" name="product_id_1" comment="Product Id 1"/>
+        <column xsi:type="text" name="product_id_2" comment="Product Id 2" />
+        <column xsi:type="text" name="product_id_3" comment="Product Id 3" />
+        <column xsi:type="text" name="product_id_4" comment="Product Id 4"/>
+        <column xsi:type="text" name="product_id_5" comment="Product Id 5" />
+        <column xsi:type="text" name="product_id_6" comment="Product Id 6"/>
+        <column xsi:type="text" name="image_comments" comment="Image Comments"/>
+        <column xsi:type="text" name="link" comment="Image Link" />
+        <column xsi:type="text" name="ig_feed_id" comment="Image Title 5"/>
+        <constraint xsi:type="primary" referenceId="PRIMARY">
+            <column name="instagrampro_image_id"/>
+            <column name="image_id"/>
+        </constraint>
+    </table>
+</schema>

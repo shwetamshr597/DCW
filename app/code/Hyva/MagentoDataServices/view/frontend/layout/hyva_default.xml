@@ -1,0 +1,12 @@
+<?xml version="1.0"?>
+<page xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:framework:View/Layout/etc/page_configuration.xsd">
+    <head>
+        <script src="Hyva_MagentoDataServices::js/storefront-event-collector.js" defer="defer"/>
+        <script src="Hyva_MagentoDataServices::js/storefront-events-sdk.js" defer="defer"/>
+    </head>
+    <body>
+        <referenceContainer name="before.body.end">
+            <block name="set_cart_context_via_section_data" template="Hyva_MagentoDataServices::set-cart-context.phtml" before="-" />
+        </referenceContainer>
+    </body>
+</page>

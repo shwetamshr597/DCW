@@ -1,0 +1,185 @@
+<?php
+/**
+ * Copyright © Magento, Inc. All rights reserved.
+ * See COPYING.txt for license details.
+ */
+
+/** @var $block \Magento\Checkout\Block\Onepage */
+/** @var \Magento\Framework\View\Helper\SecureHtmlRenderer $secureRenderer */
+?>
+
+<div id="checkout" data-bind="scope:'checkout'" class="checkout-container">
+    <div class="checkout_payment_static">
+        <?php
+        echo $this->getLayout()
+        ->createBlock('Magento\Cms\Block\Block')
+        ->setBlockId('check-payment')
+        ->toHtml();
+        ?>
+    </div> 
+    <div id="checkout-loader" data-role="checkout-loader" class="loading-mask" data-mage-init='{"checkoutLoader": {}}'>
+        <div class="loader">
+            <img src="<?= $block->escapeUrl($block->getViewFileUrl('images/loader-1.gif')) ?>"
+                 alt="<?= $block->escapeHtmlAttr(__('Loading...')) ?>">
+        </div>
+    </div>
+    <?= /* @noEscape */ $secureRenderer->renderStyleAsTag("position: absolute;", "#checkout-loader img") ?>
+    <!-- ko template: getTemplate() --><!-- /ko -->
+    <script type="text/x-magento-init">
+        {
+            "#checkout": {
+                "Magento_Ui/js/core/app": <?= /* @noEscape */ $block->getJsLayout() ?>
+            }
+        }
+    </script>
+    <?php $serializedCheckoutConfig = /* @noEscape */ $block->getSerializedCheckoutConfig();
+    $scriptString = <<<script
+        window.checkoutConfig = {$serializedCheckoutConfig};
+        // Create aliases for customer.js model from customer module
+        window.isCustomerLoggedIn = window.checkoutConfig.isCustomerLoggedIn;
+        window.customerData = window.checkoutConfig.customerData;
+script;
+    ?>
+    <?= /* @noEscape */ $secureRenderer->renderTag('script', [], $scriptString, false) ?>
+    <?php $scriptString = <<<script
+        require([
+            'mage/url',
+            'Magento_Ui/js/block-loader'
+        ], function(url, blockLoader) {
+            blockLoader("{$block->escapeJs($block->escapeUrl($block->getViewFileUrl('images/loader-1.gif')))}");
+            return url.setBaseUrl('{$block->escapeJs($block->escapeUrl($block->getBaseUrl()))}');
+        })
+script;
+    ?>
+    <?= /* @noEscape */ $secureRenderer->renderTag('script', [], $scriptString, false) ?>
+</div>
+   
+<script>
+    function splitPaymentSubmitFunc(){
+        window.location.href = BASE_URL + 'splitpayment';
+    }
+
+    require(['jquery'],function($){
+        $(function() {
+            /*$('.checkout-container').on('click','#paypal_express', function(){
+                $('.paypal_express-submit-btn').trigger('click');
+            });*/
+          
+        })
+    });
+</script>
+
+<script>
+    require(['jquery', 'jquery/ui', 'domReady!'], function ($) {
+    jQuery(document).ready(function () {
+        function updateInputClass() {
+            setTimeout(function () {
+                jQuery('.input-text').each(function () {
+                    if (jQuery(this).val()!='') {
+                        jQuery(this).removeClass('empty-field').addClass('has-value');
+                        jQuery(this).parent().removeClass('empty-field').addClass('has-value');
+                        jQuery(this).parent().parent().removeClass('empty-field').addClass('has-value');
+                        jQuery(this).removeClass('empty').addClass('has-value');
+                    } else {
+                        jQuery(this).parent().removeClass('has-value').addClass('empty-field');
+                        jQuery(this).parent().parent().removeClass('has-value').addClass('empty-field');
+                        if((jQuery(this)[0].name!="company") && (jQuery(this)[0].name!="street[1]") && (jQuery(this)[0].name!="custom_attributes[phone_ext]")){
+                            jQuery(this).removeClass('has-value').addClass('empty');
+                        }
+                    }
+                }); 
+				// console.log(jQuery("#shipping-new-address-form").parent().find('.empty').length);
+				if (jQuery("#shipping-new-address-form").parent().find('.empty').length > 0){ 
+					jQuery('#shipping-method-buttons-container .continue').prop('disabled', true);
+				} else {
+					jQuery('#shipping-method-buttons-container .continue').prop('disabled', false);
+				}
+				
+				jQuery('input[name$="telephone"]').attr('type','number');
+				jQuery('input[name$="postcode"]').attr('type','number');
+				
+				if(jQuery(".shipping-address-items").parent().find('.selected-item').length > 0){
+					jQuery('#shipping-method-buttons-container .continue').prop('disabled', false);
+				}
+				
+            // updateInputClass();
+            // jQuery('body').on('input', '.input-text', function () {
+            //     updateInputClass();
+            // });
+            updateInputClass();}, 0); 
+    }updateInputClass();
+    });
+ });
+</script>   
+
+<script>
+require(['jquery', 'jquery/ui'], function ($) {
+    var CONTROL_INTERVAL_CPS = setInterval(function(){
+        var checkoutPaymentStatic = jQuery('.checkout_payment_static');
+        var opcWrapper = jQuery('.opc-wrapper');
+        if (checkoutPaymentStatic.length > 0 && opcWrapper.length > 0) {
+            checkoutPaymentStatic.appendTo(opcWrapper);
+            clearInterval(CONTROL_INTERVAL_CPS);
+        }
+    }, 1000); // check for every 100ms
+
+});
+</script>    
+
+<script type="text/javascript">
+    require(['jquery', 'jquery/ui', 'domReady!'], function ($) {
+        jQuery(document).ready(function() {            
+            function samplePaymentPage(){
+                setTimeout(function () {
+                    var bodyElement = document.body;
+                    if(bodyElement.classList.contains('shipping-step')){
+                        bodyElement.classList.remove('payment-step');
+                        bodyElement.classList.remove('sample-payment');
+                    }
+                    else if (!bodyElement.classList.contains('shipping-step') || !bodyElement.classList.contains('payment-step')) {
+                        bodyElement.classList.add('payment-step');
+                        bodyElement.classList.add('sample-payment');
+                    }
+                    else{
+
+                    }
+                }, 5000); 
+            }
+            samplePaymentPage();
+            
+            function creditCardActive(){
+                setTimeout(function () {
+                    var paymentGroup = jQuery('.payment-group');
+                    if(paymentGroup){
+                        var paymentMethods = jQuery('.authnetcim_payment');
+                        if (paymentMethods) {               
+                            var paymentMethodsInputs = jQuery('.authnetcim_payment input');                
+                            if (paymentMethodsInputs) {
+                                if(jQuery('.payment-method').hasClass('_active')){
+                                    jQuery('.payment-method').removeClass('act');
+                                }
+                                else{
+                                    jQuery('.payment-method').addClass('act');
+                                }
+                                //jQuery('.authnetcim_payment input').prop('checked', true).trigger('change');
+                            } else {
+                            }
+                        } else {
+                        }
+                    }      
+                    
+                    var isCcn = jQuery('#authnetcim-payment input.ccn').val() !== '';
+                    var isMonth = jQuery('#authnetcim-payment select.month').val() !== 'Month';
+                    var isYear = jQuery('#authnetcim-payment select.year').val() !== 'Year';
+                    var isCvv = jQuery('#authnetcim-payment input.cvv').val() !== '';
+                    if (isCcn && isMonth && isYear && isCvv) {
+                        jQuery('#authnetcim-payment #authnetcim-submit').prop('disabled', false);
+                    } else {
+                        jQuery('#authnetcim-payment #authnetcim-submit').prop('disabled', true);
+                    }
+                    creditCardActive(); }, 0); 
+            }
+            creditCardActive();
+        });
+    });
+</script>    

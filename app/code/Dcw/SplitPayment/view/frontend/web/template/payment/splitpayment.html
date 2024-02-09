@@ -1,0 +1,36 @@
+<div class="payment-method" data-bind="attr: {id: getCode()+'-payment'}, css: {'_active': (getCode() == isChecked())}">
+    <div class="payment-method-title field choice">
+        <input type="radio"
+               name="payment[method]"
+               class="radio"
+               data-bind="attr: {'id': getCode()}, value: getCode(), checked: isChecked, click: function() {selectPaymentMethod(), splitPaymentSubmitFunc()}, visible: isRadioButtonVisible()">
+        <label data-bind="attr: {'for': getCode(), class: getCode()+'-label'}" class="label">
+            <img alt="Split Payment - Multiple cards" data-bind="attr: { src: require.toUrl('Dcw_PaymentMethods/images/splitpayment-btn.svg') } " class="show-desktop"/>
+            <img alt="Split Payment - Multiple cards" data-bind="attr: { src: require.toUrl('Dcw_PaymentMethods/images/splitpayment-btn-mob.svg') } " class="show-mobile"/>
+            <!--<span data-bind="text: getTitle()"></span>-->
+        </label>
+    </div>
+    <div class="payment-method-content" style="display: none;">
+        <!-- ko foreach: getRegion('messages') -->
+        <!-- ko template: getTemplate() --><!-- /ko -->
+        <!--/ko-->
+        <div class="actions-toolbar" style="display: none;">
+            <div class="primary">
+                <button class="action primary checkout splitPaymentSubmitBtn"
+                        type="button"
+                        onclick="splitPaymentSubmitFunc()"
+                        data-bind="
+                        attr: {title: $t('Split Payment - Multiple cards')},
+                        css: {disabled: !isPlaceOrderActionAllowed()},
+                        enable: (getCode() == isChecked())
+                        "
+                        disabled>
+                    <span data-bind="i18n: 'Split Payment - Multiple cards'"></span>
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+<script>
+  
+</script>

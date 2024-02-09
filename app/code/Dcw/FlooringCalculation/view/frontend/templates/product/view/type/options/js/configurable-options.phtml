@@ -1,0 +1,458 @@
+<?php
+/**
+ * Hyvä Themes - https://hyva.io
+ * Copyright © Hyvä Themes 2020-present. All rights reserved.
+ * This product is licensed per Magento install
+ * See https://hyva.io/license
+ */
+
+use Magento\Framework\Escaper;
+use Magento\Framework\View\Element\Template;
+
+/** @var Template $block */
+/** @var Escaper $escaper */
+?> 
+
+<script>
+    function initConfigurableOptions(productId, optionConfig) {//console.log(optionConfig);
+
+        function findPathParam(key) {
+            <?php /* get all path pairs after BASE_URL/front_name/action_path/action */ ?>
+            const baseUrl = (BASE_URL.substr(0, 2) === '//' ? 'http:' : '') + BASE_URL;
+            const baseUrlParts = (new URL(baseUrl)).pathname.replace(/\/$/, '').split('/');
+            const pathParts = window.location.pathname.split('/').slice(baseUrlParts.length + 3);
+            for (let i = 0; i < pathParts.length; i += 2) {
+                if (pathParts[i] === key && pathParts.length > i) {
+                    return pathParts[i + 1];
+                }
+            }
+        }
+
+        return {
+            optionConfig,
+            productId,
+            attributeCode:'',
+            itemId: (new URLSearchParams(window.location.search)).get('id') || findPathParam('id'),
+            allowedAttributeOptions: [],
+            selectedValues: [],
+            init() {
+                this.findAllowedAttributeOptions();
+                this.$nextTick(() => {
+                    if (typeof this.optionConfig.defaultValues === 'object') {
+                        for (const [optionId, value] of Object.entries(this.optionConfig.defaultValues)) {
+                            this.changeOption(optionId, value + '');
+                        }
+                    }
+                });
+            },
+            findSimpleIndex() {
+                <?php /* a better method name would be `updateSelectedSimpleIndex` but keeping for bc */ ?>
+                this.productIndex = this.calculateSimpleIndexForPartialSelection(this.selectedValues);
+            },
+            calculateSimpleIndexForPartialSelection(selectedValues) {
+                if (selectedValues.length === 0) return 0;
+                let productIndexIds = Object.keys(this.optionConfig.index);
+                Object.keys(this.optionConfig.attributes).forEach((attribute) => {
+                    <?php
+                    // for each attribute, check if a value is selected for the attribute
+                    // if it is, filter all products to only include those that match the selected attribute value
+                    ?>
+                    const productsWithAttributeMatch = selectedValues[attribute]
+                        ? productIndexIds.filter((productIndex) => {
+                            return this.optionConfig.index[productIndex][attribute] === this.selectedValues[attribute]
+                        })
+                        : [];
+
+                    <?php /* if we found matches, only keep the ones that match, otherwise, keep all products */ ?>
+                    productIndexIds = productsWithAttributeMatch.length ? productsWithAttributeMatch : productIndexIds
+                })
+                return productIndexIds[0];
+            },
+            calculateSimpleIndexForFullSelection(selectedValues) {
+                const productIndexes = this.optionConfig.index;
+                return Object.keys(productIndexes).find(productIndex => {
+                    const productCandidateOptions = productIndexes[productIndex];
+
+                    for (const productOption in productCandidateOptions) {
+                        if (
+                            ! selectedValues[productOption] ||
+                            selectedValues[productOption] !== productCandidateOptions[productOption]
+                        ) {
+                            return false;
+                        }
+                    }
+                    return productIndex;
+                });
+            },
+            productIndex: 0,
+            findAllowedAttributeOptions() {
+                <?php /* a better method name would be `updateAllowedAttributeOptions` but keeping for bc */ ?>
+                this.allowedAttributeOptions = this.calculateAllowedAttributeOptions(this.selectedValues);
+            },
+            calculateAllowedAttributeOptions(selectedValues) {
+                const allAttributes = this.optionConfig.attributes;
+                const allAttributesSorted = Object.values(allAttributes).sort((a,b) => {
+                    return a.position - b.position
+                });
+
+                const selectionWithoutAttr = attrId => {
+                    <?php /* return the current selection without the given attribute */ ?>
+                    return Object.keys(selectedValues).reduce((acc, id) => {
+                        if (id !== attrId) acc[id] = selectedValues[id];
+                        return acc;
+                    }, {})
+                }
+
+                const newAllowedAttributeOptions = [];
+
+                allAttributesSorted.forEach(attribute => {
+                    const availableIndexes = this.calculateAvailableProductIndexes(selectionWithoutAttr(attribute.id));
+                    newAllowedAttributeOptions[attribute.id] = allAttributes[attribute.id].options.filter(option => {
+                        return !!option.products.find(product => {
+                            //====== For Custom Design link - fetch child product id on page load  START ======
+                            if(document.querySelector('input[name="selected_option_child_id"]')){
+                                if(document.querySelector('input[name="selected_option_child_id"]').value == ''){
+                                    document.querySelector('input[name="selected_option_child_id"]').value = product;
+                                }
+                            }
+                            //====== For Custom Design link - fetch child product id on page load END ======
+                            return availableIndexes.includes(product);
+                        })
+                    });
+                });
+                return newAllowedAttributeOptions;
+            },
+            calculateAvailableProductIndexes(selectedOptions) {
+                if (Object.keys(selectedOptions).length === 0) {
+                    <?php /* no selected options mean all products are available for selection */ ?>
+                    return Object.keys(this.optionConfig.index);
+                }
+
+                <?php
+                // when cataloginventory/options/show_out_of_stock is set, this.optionConfig.index contains
+                // out of stock products. Since 2.4.4 this.optionConfig.salable was introduced, which reflects
+                // Actual salable state of a product, but only if the option is set, otherwise it is an empty object.
+                // So if this.optionConfig.salable is available, it should be used.
+                // Otherwise, the code checks which products match the given current selection as it was for older
+                // Magento versions, but then options of out of stock products are shown if the config option is set.
+                ?>
+                const selectedIds = Object.keys(selectedOptions);
+                if (Object.values(this.optionConfig.salable || {}).length) {
+                    <?php /* for Magento >= 2.4.4 when out-of-stock products are shown: */ ?>
+                    const selectedOptionIndexes = selectedIds.map(attrId => {
+                        const optionValue = selectedOptions[attrId];
+                        return this.optionConfig.salable[attrId] && this.optionConfig.salable[attrId][optionValue] || []
+                    })
+                    <?php /* intersection of optionIndexes */ ?>
+                    return selectedOptionIndexes.reduce((acc, optionIndexes) => {
+                        return acc.filter(index => optionIndexes.includes(index));
+                    });
+                } else {
+                    <?php /* for Magento < 2.4.4 or when not out-of-stock-products are hidden: */ ?>
+                    const productIndexes = this.optionConfig.index;
+                    return Object.keys(productIndexes).filter(index => {
+                        return selectedIds.find(
+                                                attrId => productIndexes[index][attrId] === `${selectedOptions[attrId]}`
+                                                )
+                    });
+                }
+            },
+            findAttributeByOptionId(optionId) {
+                for (const attributeId in this.optionConfig.attributes) {
+                    const attributeOptions = this.optionConfig.attributes[attributeId].options || [];
+                    if (attributeOptions.find(option => option.id === optionId)) {
+                        return attributeId;
+                    }
+                }
+            },
+            getAllowedAttributeOptions(attributeId) {
+                return this.allowedAttributeOptions[attributeId] || []
+            },
+            getProductIdsForOption(option) {
+                const attributeId = this.findAttributeByOptionId(option.id);
+                const allOptions = this.optionConfig.attributes[attributeId];
+                const opt = (allOptions && allOptions.options || []).find(o => o.id === option.id);
+                return opt && opt.products
+                    ? opt.products
+                    : [];
+            },
+            findProductIdsForPartialSelection(optionSelection) {
+                const candidateProducts = Object.values(optionSelection).reduce((candidates, optionId) => {
+                    const newCandidates = this.getProductIdsForOption({id: optionId});
+                    return candidates === null
+                        ? newCandidates
+                        : candidates.filter(productId => newCandidates.includes(productId));
+                }, null);
+                return candidateProducts || [];
+            },
+            findCheapestProductForPartialSelection(optionSelection) {
+                const candidateProducts = this.findProductIdsForPartialSelection(optionSelection);
+                return candidateProducts.reduce((cheapest, simpleIdx) => {
+                    // in the first iteration we start with simpleIdx as the currently cheapest product
+                    if (! this.optionConfig.optionPrices[cheapest]) return simpleIdx;
+                    const knownCheapestPrice = this.optionConfig.optionPrices[cheapest].finalPrice.amount;
+                    return knownCheapestPrice > this.optionConfig.optionPrices[simpleIdx].finalPrice.amount
+                        ? simpleIdx
+                        : cheapest;
+                }, 0)
+            },
+            findProductIdToUseForOptionPrice(option) {
+                // try to find a product for a complete selection
+                const attributeId = this.findAttributeByOptionId(option.id);
+                const optionSelection = Object.assign({}, this.selectedValues, {[attributeId]: option.id});
+                const matchingSimpleIndex = this.calculateSimpleIndexForFullSelection(optionSelection);
+                // if there is no complete selection, use the cheapest product for the option
+                return matchingSimpleIndex || this.findCheapestProductForPartialSelection(optionSelection);
+            },
+            getAttributeOptionLabel(option) {
+                const optionProduct = this.findProductIdToUseForOptionPrice(option);
+                if ((! optionProduct) || (optionProduct === this.productIndex)) {
+                    return option.label;
+                }
+
+                const currentPrice = this.getOptionPriceAdjustmentBasePrice();
+
+                if (this.optionConfig.optionPrices[optionProduct]) {
+                    const optionPrice = this.optionConfig.optionPrices[optionProduct].finalPrice.amount;
+                    if (optionPrice !== currentPrice){
+                        return option.label + ' ' + hyva.formatPrice(optionPrice - currentPrice, true);
+                    }
+                }
+                return option.label;
+            },
+            getOptionPriceAdjustmentBasePrice() {
+                if (this.optionConfig.optionPrices[this.productIndex]) {
+                    return this.optionConfig.optionPrices[this.productIndex].finalPrice.amount
+                }
+                const cheapestForSelection = this.findCheapestProductForPartialSelection(this.selectedValues);
+                return this.optionConfig.optionPrices[cheapestForSelection]
+                    ? this.optionConfig.optionPrices[cheapestForSelection].finalPrice.amount
+                    : this.optionConfig.prices.finalPrice.amount; // default price if no option selection
+            },
+            changeOption(optionId, value) {
+                if (value === '') {
+                    // create new array so the length property is reset if no option is selected (avoiding delete)
+                    this.selectedValues = this.selectedValues.reduce((newSelection, val, opt) => {
+                        if (opt !== optionId) {
+                            newSelection[opt] = val;
+                        }
+                        return newSelection;
+                    }, []);
+                } else {
+                    this.selectedValues[optionId] = value;
+                }
+                this.findSimpleIndex();
+                this.findAllowedAttributeOptions();
+                this.updateTileSizeArea(); // custom coding
+                this.updateExactWidth(); // custom coding
+                this.updateExactLength(); // custom coding
+                this.updateExactHeight(); // custom coding
+                this.updateCoveragePerCase(); // custom coding
+                this.updateTileMinQty(); // custom coding
+                this.updateShippingDetails(); // custom coding
+                this.updatePrices();
+                this.updateGallery();
+                this.updateMinRollcut();
+                this.updateMaxRollLengthRestriction();
+                //====== For Custom Design link - fetch child product id when option clicked  START ======
+                if(document.querySelector('input[name="selected_option_child_id"]')){
+                    document.querySelector('input[name="selected_option_child_id"]').value = this.productIndex;
+                }
+                //====== For Custom Design link - fetch child product id when option clicked END ======
+                window.dispatchEvent(
+                    new CustomEvent(
+                        'configurable-selection-changed',
+                        {
+                            detail: {
+                                productId: this.productId,
+                                optionId: optionId,
+                                value: value,
+                                productIndex: this.productIndex,
+                                selectedValues: this.selectedValues,
+                                attributeCode: this.optionConfig.attributes[optionId]['code'],
+                                candidates: this.findProductIdsForPartialSelection(this.selectedValues),
+                            }
+                        }
+                    )
+                );
+            },
+            calculateIsMinimalPrice() {
+                return (
+                    this.selectedValues.filter(value => !!value).length <
+                        Object.keys(this.optionConfig.attributes).length
+                );
+            },
+            updatePrices() {
+                const value = this.productIndex ?
+                    this.optionConfig.optionPrices[this.productIndex] :
+                    this.optionConfig.prices;
+                window.dispatchEvent(
+                    new CustomEvent(
+                        "update-prices-" + this.productId,
+                        {
+                            detail: Object.assign(
+                                value,
+                                { isMinimalPrice: this.calculateIsMinimalPrice() }
+                            )
+                        }
+                    )
+                );
+            },
+            updateTileSizeArea() {
+                const tile_size_area_text = this.optionConfig.tile_size_area[this.productIndex];
+                const exact_width = this.optionConfig.exact_width[this.productIndex];
+                const exact_length = this.optionConfig.exact_length[this.productIndex];
+                window.dispatchEvent(
+                    new CustomEvent(
+                        "update-tile-size-area-" + this.productId,
+                        {
+                            detail: {
+                            tile_size_area_text: tile_size_area_text,
+                            exact_width: exact_width,
+                            exact_length: exact_length,
+                            }
+                        }
+                    )
+                );
+            },
+            updateExactWidth() {
+                const exact_width = this.optionConfig.exact_width[this.productIndex];
+                window.dispatchEvent(
+                    new CustomEvent(
+                        "update-exact-width-" + this.productId,
+                        {detail: exact_width}
+                    )
+                );
+            },
+            updateExactLength() {
+                const exact_length = this.optionConfig.exact_length[this.productIndex];
+                window.dispatchEvent(
+                    new CustomEvent(
+                        "update-exact-length-" + this.productId,
+                        {detail: exact_length}
+                    )
+                );
+            },
+            updateExactHeight() {
+                const exact_height = this.optionConfig.exact_height[this.productIndex];
+                window.dispatchEvent(
+                    new CustomEvent(
+                        "update-exact-height-" + this.productId,
+                        {detail: exact_height}
+                    )
+                );
+            },
+            updateCoveragePerCase() {
+                const tile_size_area = this.optionConfig.coverage_per_case[this.productIndex];
+                window.dispatchEvent(
+                    new CustomEvent(
+                        "update-coverage-per-case-" + this.productId,
+                        {detail: tile_size_area}
+                    )
+                );
+            },
+            updateTileMinQty() {
+                const min_tile_quantity = this.optionConfig.min_tile_quantity[this.productIndex];
+                console.log('con Qty'+min_tile_quantity); 
+                window.dispatchEvent(
+                    new CustomEvent(
+                        "update-min-tile-quantity-" + this.productId,
+                        {detail: min_tile_quantity}
+                    )
+                );
+            }, 
+
+            updateMinRollcut() {
+                const min_rollcut = this.optionConfig.min_rollcut[this.productIndex];
+                console.log('min_rollcut'+min_rollcut); 
+                window.dispatchEvent(
+                    new CustomEvent(
+                        "update-min-rollcut-" + this.productId,
+                        {detail: min_rollcut}
+                    )
+                );
+            },
+
+            updateMaxRollLengthRestriction() {
+                const max_roll_length_restriction = this.optionConfig.max_roll_length_restriction[this.productIndex];
+                console.log('max_roll_length_restriction'+max_roll_length_restriction); 
+                window.dispatchEvent(
+                    new CustomEvent(
+                        "update-max-roll-length-restriction-" + this.productId,
+                        {detail: max_roll_length_restriction}
+                    )
+                );
+            },
+            updateShippingDetails() {
+                const pdp_shipping_text = this.optionConfig.pdp_shipping_text[this.productIndex];
+                const expected_days_ship = this.optionConfig.expected_days_ship[this.productIndex];
+                window.dispatchEvent(
+                    new CustomEvent(
+                        "update-shipping-details-" + this.productId,
+                        {
+                            detail: {
+                            pdp_shipping_text: pdp_shipping_text,
+                            expected_days_ship: expected_days_ship,
+                            }
+                        }
+                    )
+                );
+            },
+            updateGallery () {
+                if (this.productIndex) {
+                    const images = this.optionConfig.images[this.productIndex];
+                    images && window.dispatchEvent(new CustomEvent(
+                        "update-gallery",
+                        { detail: this.sortImagesByPosition(images) }
+                    ));
+                } else {
+                    window.dispatchEvent(new Event("reset-gallery"));
+                }
+            },
+            sortImagesByPosition(images) {
+                return images.sort((x, y) => {
+                    return x.position === y.position ? 0 : (parseInt(x.position) > parseInt(y.position) ? 1 : -1)
+                });
+            },
+            onGetCartData(data) {
+                this.preselectCartItems(data);
+                this.preselectQuerystringItems();
+                this.preselectLocationHashItems();
+            },
+            preselectCartItems(data) {
+                // pre-select options based on cart data for current (quote) itemId
+                const cart = data && data.cart;
+                if (cart && cart.items) {
+                    const cartItem = cart.items.find((item) => {
+                        return (
+                            item.item_id === this.itemId
+                            && item.product_id === this.productId
+                        )
+                    });
+                    if (cartItem && cartItem.options && cartItem.options.length) {
+                        cartItem.options.map(option => {
+                            this.changeOption(option.option_id, option.option_value);
+                        })
+                    }
+                }
+            },
+            preselectQuerystringItems() {
+                // pre-select option like ?size=167
+                const urlQueryParams = new URLSearchParams(window.location.search.replace('?',''));
+                Object.values(this.optionConfig.attributes).map(attribute => {
+                    urlQueryParams.get(attribute.code) &&
+                    this.changeOption(attribute.id, urlQueryParams.get(attribute.code));
+                });
+            },
+            preselectLocationHashItems() {
+                // pre-select option like #144=167
+                const urlHashParams = new URLSearchParams(window.location.hash.replace('#',''));
+                Object.values(this.optionConfig.attributes).map(attribute => {
+                    urlHashParams.get(attribute.id) &&
+                    this.changeOption(attribute.id, urlHashParams.get(attribute.id));
+                });
+            }
+        }
+    }
+
+</script>

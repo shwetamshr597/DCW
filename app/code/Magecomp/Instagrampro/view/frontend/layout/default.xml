@@ -1,0 +1,32 @@
+<?xml version="1.0"?>
+<page xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:framework:View/Layout/etc/page_configuration.xsd">
+  <head>
+  	<css src="Magecomp_Instagrampro::css/fontawesome/css/font-awesome.css"/>
+	<css src="Magecomp_Instagrampro::css/fontawesome/css/font-awesome.min.css"/>
+    <css src="Magecomp_Instagrampro::css/instagrampro.css"/>
+    <css src="Magecomp_Instagrampro::css/owl.theme.default.min.css"/>
+    <css src="Magecomp_Instagrampro::css/owl.carousel.min.css"/>
+    <script src="Magecomp_Instagrampro::js/jquery-1.12.1.min.js"/>
+    <!--<script src="Magecomp_Instagrampro::js/owl.carousel.js" defer="true"/>-->
+    <script src="Magecomp_Instagrampro::js/owl.carousel.min.js" defer="true"/>
+  </head>
+  <body>
+  	<referenceBlock name="header.links">
+        <block class="Magento\Framework\View\Element\Html\Link" name="instalink" after="register-link" ifconfig="instagrampro/module_options/enabled">
+            <arguments>
+                <argument name="label" xsi:type="string" translate="true">Instagram Page</argument>
+                <argument name="path" xsi:type="helper" helper="Magecomp\Instagrampro\Helper\Data::getFrontendLink"></argument>
+            </arguments>
+        </block>
+    </referenceBlock>
+	
+	<referenceBlock name="footer_links">
+        <block class="Magento\Framework\View\Element\Html\Link\Current" name="instaflink" ifconfig="instagrampro/module_options/enabled">
+            <arguments>
+                <argument name="label" xsi:type="string" translate="true">Instagram Page</argument>
+                <argument name="path" xsi:type="helper" helper="Magecomp\Instagrampro\Helper\Data::getFrontendLink"></argument>
+            </arguments>
+        </block>
+    </referenceBlock>
+  </body>
+</page>

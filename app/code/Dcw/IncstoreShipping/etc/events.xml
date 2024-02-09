@@ -1,0 +1,12 @@
+<?xml version="1.0"?>
+<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:framework:Event/etc/events.xsd">
+    
+    <event name="checkout_onepage_controller_success_action">
+       <observer name="after_order_place" instance="Dcw\IncstoreShipping\Observer\OrderPlacedAfterObserver" />
+    </event>
+	
+	<!-- <event name="sales_quote_item_set_product">
+        <observer name="set_item_custom_attribute" instance="Dcw\IncstoreShipping\Observer\SetItemCustomAttribute" />
+    </event> -->
+
+</config>

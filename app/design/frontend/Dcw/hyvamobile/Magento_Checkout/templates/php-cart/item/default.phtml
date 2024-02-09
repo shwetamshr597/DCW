@@ -1,0 +1,202 @@
+<?php
+/**
+ * Hyvä Themes - https://hyva.io
+ * Copyright © Hyvä Themes 2020-present. All rights reserved.
+ * This product is licensed per Magento install
+ * See https://hyva.io/license
+ */
+
+declare(strict_types=1);
+
+// phpcs:disable Magento2.Files.LineLength.MaxExceeded
+
+use Magento\Checkout\Block\Cart\Item\Renderer;
+use Magento\Framework\Escaper;
+
+/** @var Renderer $block */
+/** @var Escaper $escaper */
+
+$item = $block->getItem();
+$product = $item->getProduct();
+$hero = $product->getHeroMessage();
+$isVisibleProduct = $product->isVisibleInSiteVisibility();
+$objectManager = \Magento\Framework\App\ObjectManager::getInstance();
+$pro_recycle_factor = \Magento\Framework\App\ObjectManager::getInstance()
+    ->get(\Magento\Framework\App\Config\ScopeConfigInterface::class)
+    ->getValue(
+        'dcw_checkout/shopping_cart_config/default_product_recycle_factor',
+        \Magento\Store\Model\ScopeInterface::SCOPE_STORE,
+    );
+
+$proweight = '';
+?>
+<tbody class="cart item">
+    <tr class="item-info align-top text-left lg:text-right flex flex-wrap lg:table-row">
+        <td data-th="<?= $escaper->escapeHtml(__('Item')) ?>" class="col item pt-4 flex flex-wrap gap-4 text-left w-full lg:w-auto">
+          <div class="float-left cart-left">
+          <?php if (!empty($block->hasProductUrl()) && $block->hasProductUrl() == 1) {
+                                $optionurl = $this->getUrl(
+                                'checkout/cart/configure',
+                                [
+                                    'id' => $item->getId(),
+                                    'product_id' => $product->getId()
+                                ]
+                                ); 
+                            } else {
+                                $optionurl = $block->getProductUrl(); 
+                            }
+                            ?>
+            <a href="<?= $escaper->escapeUrl($optionurl) ?>"
+                   title="<?= $escaper->escapeHtmlAttr($block->getProductName()) ?>"
+                   tabindex="-1"
+                   class="product-item-photo shrink-0">
+                <span class="product-item-photo shrink-0">
+            <?= $block->getImage($block->getProductForThumbnail(), 'cart_page_product_thumbnail')
+                ->setTemplate('Magento_Catalog::product/image.phtml')
+                ->toHtml() ?>
+                </a>
+                </span>
+        </div>
+        <div class="cart-right">
+            <div class="product-item-details grow">
+                <span class="product-item-name break-all sm:text-size14 font-semibold" style="color:#252525;">
+                       <a href="<?= $escaper->escapeUrl($optionurl) ?>"><?= $escaper->escapeHtml($block->getProductName()) ?></a>
+                </span>
+                <?php if ($options = $block->getOptionList()): ?>
+					<dd class ="view-detials-shop"><a href="javascript:void(0);" style="color:#252525;" id ="details-<?php echo $item->getId();?>" class ="sm:text-size14 dcwdetails close" onclick ="viewdetail(<?php echo $item->getId();?>)">View Details</a></dd>
+                    <dl class="item-options w-full break-all mt-1 text-size12 clearfix" id ="view-details-opt-<?php echo $item->getId();?>"  style ="display:none;">
+                        <?php foreach ($options as $option): ?>
+                            <?php 
+                            if($option['label']=="Configurable Product Id" || $option['label']== "Configurable Product Url" || $option['label']=="Configurable Product Image" ) {
+                                continue;
+                            }
+                            ?>
+                            <?php $formatedOptionValue = $block->getFormatedOptionValue($option);
+                            if($option['label'] == "Product Name") continue;
+							if($option['label'] == "Weight"){ $proweight = $option['value']; }
+                            ?>
+							<?php if($option['label']!=""){?>
+                            <dt class="font-semibold float-left clear-left mr-2 mb-1" style="color:#252525;"><?= $escaper->escapeHtml($option['label']) ?>:</dt>
+							<?php }  else {?>
+							<dt class="font-semibold float-left clear-left mb-1 no-labels" style="color:#252525;"></dt>
+							<?php } ?>
+                            <dd class="float-left">
+                                <a class="action action-edit" style="color:#252525;"
+                                href="<?= $escaper->escapeUrl($optionurl) ?>"
+                                title="<?= $escaper->escapeHtml($option['label']) ?>"
+                                >
+                                <?php if (isset($formatedOptionValue['full_view'])): ?>
+                                        <?= $escaper->escapeHtml($formatedOptionValue['full_view']) ?>
+                                    <?php else: ?>
+                                        <?= $escaper->escapeHtml($formatedOptionValue['value'], ['span', 'a']) ?>
+                                <?php endif; ?>
+                                </a>
+                            </dd>
+                        <?php endforeach; ?>
+						
+                    </dl>
+					
+                <?php endif;?>
+                <?php if ($messages = $block->getMessages()): ?>
+                    <?php foreach ($messages as $message): ?>
+                        <div class= "cart item message <?= $escaper->escapeHtmlAttr($message['type']) ?>">
+                            <div><?= $escaper->escapeHtml($message['text']) ?></div>
+                        </div>
+                    <?php endforeach; ?>
+                <?php endif; ?>
+                <?php $addInfoBlock = $block->getProductAdditionalInformationBlock(); ?>
+                <?php if ($addInfoBlock): ?>
+                    <?= $addInfoBlock->setItem($item)->toHtml() ?>
+                <?php endif;?>
+                </div>
+                <div class="col price pt-1 block w-full flex">
+                <span class="lg:hidden text-size14 mr-2" style="line-height:25px;color:#252525;">
+                    <?= $escaper->escapeHtml(__('Price :')) ?>
+                </span>
+                <?= $block->getUnitPriceHtml($item) ?>
+                </div>
+                <div class="col qty block w-full flex">
+                    <span class="lg:hidden mr-2 text-size14 uppercase" style="line-height:41px;color:#252525;">
+                        <?= $escaper->escapeHtml(__('Qty')) ?>
+                    </span>
+                    <div class="field qty">
+                        <div class="control qty">
+                            <label for="cart-<?= $escaper->escapeHtmlAttr($item->getId()) ?>-qty">
+                                <span class="label sr-only"><?= $escaper->escapeHtml(__('Qty')) ?></span>
+                                <input id="cart-<?= $escaper->escapeHtmlAttr($item->getId()) ?>-qty"
+                                    name="cart[<?= $escaper->escapeHtmlAttr($item->getId()) ?>][qty]"
+                                    value="<?= $escaper->escapeHtmlAttr($block->getQty()) ?>"
+                                    type="number"
+                                    size="4"
+                                    onkeypress="return onlyNumberKey(event)"
+                                    onblur="submitForm(event)"
+                                    step="any"
+                                    title="<?= $escaper->escapeHtmlAttr(__('Qty')) ?>"
+                                    class="qty form-input px-2 py-2 w-20 text-center"
+                                    required="required"
+                                    min="0"
+                                    <?= ($product->getFreeTshirt() == 1)?'readonly disabled':''; ?>
+                                    data-role="cart-item-qty"/>
+                            </label>
+                        </div>
+                    </div>
+                        </div>
+                        <div class="col subtotal block w-full flex absolute">
+                        <span class="lg:hidden text-size14 mr-2" style="line-height:25px;color:#252525;">
+                            <?= $escaper->escapeHtml(__('Subtotal :')) ?>
+                        </span>
+                        <?= $block->getRowTotalHtml($item) ?>
+                </div>
+                        
+                </div>
+        </td>
+    </tr>
+    <tr class="item-actions">
+        <td colspan="4">
+            <div class="flex justify-end gap-4 p-4 pt-2 pb-2 items-btns my-6">
+                <?= /* @noEscape */ $block->getActions($item) ?>
+            </div>
+			<?php if($proweight!="" && $pro_recycle_factor!="") {  
+						$eachweight = trim(str_replace("lbs","",$proweight));
+						$intweight = intval($eachweight);
+						$pro_recycle_factor = intval($pro_recycle_factor);
+						$recyclevalue = $intweight / $pro_recycle_factor;
+					
+						if($hero==1) { echo "<div class ='hero-text'>You're a hero! this order saves ".$recyclevalue." tires from ending up in the landfills.</div>";}
+			}?>
+        </td>
+		
+    </tr>
+</tbody>
+
+<script>
+        function onlyNumberKey(evt) {
+             
+            // Only ASCII character in that range allowed
+            var ASCIICode = (evt.which) ? evt.which : evt.keyCode
+            if (ASCIICode > 31 && (ASCIICode < 48 || ASCIICode > 57))
+                return false;
+            return true;
+        }
+    </script>
+<script>
+    var myForm = document.getElementById("form-validate");
+        function submitForm(){
+            myForm.submit();
+        }
+function viewdetail(id){
+	var detailsElement = document.getElementById("view-details-opt-"+id);
+	
+	if (detailsElement.style.display === "none") {
+		detailsElement.style.display = "block";
+		document.getElementById("details-"+id).classList.add("open");
+		document.getElementById("details-"+id).classList.remove("close");
+	} else {
+		detailsElement.style.display = "none";
+		document.getElementById("details-"+id).classList.add("close");
+		document.getElementById("details-"+id).classList.remove("open");
+		
+	}
+}
+</script>
+

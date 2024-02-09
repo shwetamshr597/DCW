@@ -1,0 +1,66 @@
+<script>
+    require([
+        'jquery',
+        'prototype',
+    ], function(jQuery){
+        function function_name() {
+            params = {
+                "store" : <?php echo $block->getCurrentStoreId(); ?>
+            };
+
+            new Ajax.Request('<?php echo $block->getAjaxUrl() ?>', {
+                loaderArea:     false,
+                asynchronous:   true,
+                parameters:     params,
+                onCreate: function() {
+                    jQuery('#collect_span').find('.collected').hide();
+                    jQuery('#collect_span').find('.rejected').hide();
+
+                    jQuery('#collect_span').find('.processing').show();
+                    jQuery('#collect_message_span').text('');
+                },
+                onSuccess: function(transport) {
+                    jQuery('#collect_span').find('.processing').hide();
+                    var response = JSON.parse(transport.responseText);
+                    var responseSuccess = jQuery.parseJSON(transport.responseText);
+
+                    if(responseSuccess['success'] == true) {
+                        jQuery('#collect_span').find('.collected').show();
+                        jQuery('.insta_profile').attr('src',responseSuccess['ig_business_profilepic']);
+                        jQuery('.insta_profile_link').attr('href',"https://www.instagram.com/"+responseSuccess['ig_business_username']);
+
+                        jQuery('.insta_profile').show();
+                    }else{
+                        jQuery('#collect_span').find('.rejected').show();
+                    }
+                }
+            });
+        }
+
+        jQuery('#btnid').click(function () {
+            function_name ();
+        });
+    });
+</script>
+
+<?php echo $block->getButtonHtml();
+
+?>
+<span class="collect-indicator" id="collect_span">
+    <img class="processing" hidden="hidden" alt="Collecting" style="margin:0 5px" src="<?php echo $block->getViewFileUrl('images/process_spinner.gif') ?>"/>
+    <img class="collected" hidden="hidden" alt="Collected" style="margin:-3px 5px;" src="<?php echo $block->getViewFileUrl('images/rule_component_apply.gif') ?>"/>
+    <img class="rejected" hidden="hidden" alt="Collected" style="margin:-3px 5px" src="<?php echo $block->getViewFileUrl('images/rule_component_remove.gif') ?>"/>
+    <span id="collect_message_span"></span>
+</span>
+<?php
+$profilePic = "";
+if ($block->getIGProfilePicForCurrentStore()) {
+    $profilePic = $block->getIGProfilePicForCurrentStore();
+} else {
+    $profilePic = $block->getViewFileUrl('Magecomp_Instagrampro::images/default_profile.png');
+    ;
+}
+?>
+<div style="margin-top: 5px;clear: both">
+    <a href="#" class="insta_profile_link" target="_blank"> <img class="insta_profile" hidden="hidden" style="margin:0 5px;display: block" src="<?php echo $profilePic; ?>" width="75" height="75"/> </a>
+</div>

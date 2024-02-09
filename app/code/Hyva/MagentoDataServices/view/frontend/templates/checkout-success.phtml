@@ -1,0 +1,28 @@
+<?php
+/** @var \Magento\DataServices\Block\Context $block */
+
+use Hyva\MagentoDataServices\ViewModel\CheckoutSuccessContextProvider;
+
+$viewModel = $block->getViewModel();
+/** @var CheckoutSuccessContextProvider $successContextViewModel */
+$successContextViewModel = $viewModels->require(CheckoutSuccessContextProvider::class);
+?>
+
+<script>
+    window.addEventListener('load', function () {
+        magentoStorefrontEvents.context.setPage({
+            pageType: "<?= /* @noEscape */ $block->getData('page_type'); ?>"
+        });
+        magentoStorefrontEvents.context.setContext("pageExtended", {
+            action: "<?= /* @noEscape */ $block->getData('step_name'); ?>"
+        });
+        magentoStorefrontEvents.context.setShoppingCart(<?= /* @noEscape */ $successContextViewModel->getLastOrderCartContextData() ?>);
+        let orderContext = magentoStorefrontEvents.context.getOrder() || {};
+        orderContext.orderId = "<?= /* @noEscape */ $viewModel->getOrderId(); ?>";
+        orderContext.payments = <?= /* @noEscape */ $viewModel->getPayment(); ?>;
+        orderContext.shipping = <?= /* @noEscape */ $viewModel->getShipping(); ?>;
+        magentoStorefrontEvents.context.setOrder(orderContext);
+
+        magentoStorefrontEvents.publish.placeOrder();
+    });
+</script>

@@ -1,0 +1,51 @@
+<script>
+    function dataServicesShoppingCartContextData()
+    {
+        return {
+            initContext(cartData) {
+                let contextCartItems = [];
+
+                cartData.items.forEach(function (item){
+                    contextCartItems.push({
+                        id: item.item_id,
+                        formattedPrice: parseFloat(item.product_price_value),
+                        quantity: item.qty,
+                        product: {
+                            productType: item.product_type,
+                            productId: item.product_id,
+                            name: item.product_name,
+                            sku: item.product_sku,
+                            mainImageUrl : item.product_image.src
+                        },
+                        prices: {
+                            price: {
+                                value: parseFloat(item.product_price_value)
+                            }
+                        }
+                    })
+                });
+
+                magentoStorefrontEvents.context.setShoppingCart({
+                    id: cartData.dsCartId,
+                    totalQuantity: cartData.summary_count,
+                    prices: {
+                        subtotalExcludingTax: {
+                            value: parseFloat(cartData.subtotalAmountExclTax)
+                        },
+                        subtotalIncludingTax: {
+                            value: parseFloat(cartData.subtotalAmount)
+                        }
+                    },
+                    items: contextCartItems,
+                    possibleOnepageCheckout: cartData.possible_onepage_checkout,
+                    giftMessageSelected : false,
+                    giftWrappingSelected : false
+                });
+
+                window.dispatchEvent(new Event("shoppingCartContextSet"));
+            }
+        }
+    }
+</script>
+<div x-data="dataServicesShoppingCartContextData()"
+     @private-content-loaded.window="initContext($event.detail.data.cart)"></div>

@@ -1,0 +1,30 @@
+<div x-data="notificationAjaxCall()" x-init="initNotificationFunc()">
+    <div class="header_left_notification p-3 text-size14 font-normal text-custom-white" x-html="left_notification_html"></div>
+</div>
+
+<script>
+function notificationAjaxCall() {
+    return {
+        availability_notification: '',
+        left_notification_html: '',
+        right_notification_html: '',
+        initNotificationFunc: function () {
+            fetch(BASE_URL+'notifications/index/show', {
+                method: "GET",
+                headers: { 'Content-Type': 'application/json' },
+            })
+            .then(response => {
+                if (! response.ok) console.warn('GET request failed');
+                return response.json();
+            })
+            .then(data => {
+                if (data) {
+                  //this.availability_notification = data.availability_notification;
+                  this.left_notification_html = data.left_notification_html;
+                  //this.right_notification_html = data.right_notification_html;
+                }
+            });
+        }
+    }
+}
+</script>

@@ -1,0 +1,279 @@
+<?php
+/**
+ * HyvÃ¤ Themes - https://hyva.io
+ * Copyright Â© HyvÃ¤ Themes 2020-present. All rights reserved.
+ * This product is licensed per Magento install
+ * See https://hyva.io/license
+ */
+
+use Hyva\Theme\Model\ViewModelRegistry;
+use Hyva\Theme\ViewModel\HeroiconsOutline;
+use Magento\Framework\Escaper;
+use Magento\Newsletter\Block\Subscribe;
+use Hyva\Theme\ViewModel\HeroiconsSolid;
+use Hyva\Theme\ViewModel\ProductCompare;
+use Magento\Framework\Pricing\Render;
+use Magento\Catalog\Pricing\Price\FinalPrice;
+
+/** @var Subscribe $block */
+/** @var Escaper $escaper */
+/** @var ViewModelRegistry $viewModels */
+/** @var HeroiconsOutline $heroicons */
+
+$heroicons = $viewModels->require(HeroiconsOutline::class);
+$currentUrl = $block->getUrl('*/*/*', ['_current' => true, '_use_rewrite' => true]);
+?>
+
+<?php
+/**
+ * Copyright Â© Magento, Inc. All rights reserved.
+ * See COPYING.txt for license details.
+ */
+use Magento\Framework\App\Action\Action;
+
+$pListBlock= $block->getLayout()->createBlock(\Magento\Catalog\Block\Product\ListProduct::class);
+$galleryblock= $block->getLayout()->createBlock(\Magento\Catalog\Block\Product\View\Gallery::class);
+$abstractProductBlock = $block->getLayout()->createBlock(\Magento\Catalog\Block\Product\AbstractProduct::class);
+/** @var \Magento\Catalog\Helper\Output $_helper */
+$_helper = $block->getData('outputHelper');
+$imagewidth=200;
+$imageheight=200;
+?>
+<?php
+/**
+ * @var \Magento\Framework\Escaper $escaper
+ * @var \Magento\Framework\View\Helper\SecureHtmlRenderer $secureRenderer
+ */
+?>
+
+<?php
+$uniqueId = '_' . uniqid();
+$curSymbol=$block->getCurrentCurrencySymbol();
+$productId=$block->getProductId();
+$_product=$block->getLoadProduct($productId);
+if ($_product) {
+    $samplesku=[];
+    $childids=[];
+    $_cProductName=[];
+    $_sProductColorId=[];
+    $pids="";
+    $spids_color = "";
+    $childproids="";
+    
+    if ($_product->getTypeId()=='configurable') {
+        $_children=$_product->getTypeInstance()->getUsedProducts($_product);
+        foreach ($_children as $child) {
+                $childids[]=$child->getId();
+        }
+    }
+    if ($_product->getTypeId()=='simple') {
+        $childids[]=$_product->getId();
+    }
+    $sampleIdArray=[];
+    foreach ($childids as $pid) {
+        $_cProduct=$block->getLoadProduct($pid);
+        if ($_cProduct->getSampleProductSku()) {
+            $samplesku[$_cProduct->getAttributeText('color')]=$_cProduct->getSampleProductSku();
+            if($_cProduct->getSampleProductSku() != "") {
+                $sampleIdArray[$_cProduct->getAttributeText('color')]=$_cProduct->getId();
+            }
+            
+            /*if(!in_array($_cProduct->getAttributeText('color'),$_cProductName )) {
+                $_cProductName[] = $_cProduct->getAttributeText('color'); //Added by RKM 30th April 2023         
+            }
+            if(!in_array($_cProduct->getColor(),$_sProductColorId )) {
+                $_sProductColorId[] = $_cProduct->getColor(); //Added by RKM 30th April 2023         
+            }*/
+        }            
+    }
+    if ($samplesku) {
+         // add canto image code
+         $cantoImageHelper = \Magento\Framework\App\ObjectManager::getInstance()->get(\Dcw\ProductImage\Helper\Data::class);
+         $imageDcwHelper = \Magento\Framework\App\ObjectManager::getInstance()->get(\Magento\Catalog\Helper\Image::class);
+         $cantoImage = $cantoImageHelper->getMainImageUrl($_product);
+         if ($cantoImage!="") {
+             $imagesDimensionMedium = $cantoImageHelper->getSmallImageDimension();
+             $mainImageData = $cantoImage.'/-B'.$imagesDimensionMedium;
+         } else {
+             $mainImageData = $imageDcwHelper->getDefaultPlaceholderUrl('small_image');
+         }
+         // end canto image code
+       // $mainImageData = '';//$block->getProductImageUrl($_product, 'product_base_image');
+        $mainprice = $_product->getPriceInfo()->getPrice('final_price')->getAmount()->getValue();
+        $priceHtml = '<span>'.$curSymbol.$mainprice.'</span>';
+        $quotePids=$block->getQuoteProductIds();
+        $quotePidsname=$block->getQuoteProductIdsName();
+        $quotePidsColor=$block->getQuoteProductIdsColor();
+        //print_r($quotePidsColor);
+        if(count($quotePids)>0) {
+            $pids=implode(',', $quotePids);
+            $spids_color = "'".implode("','", $quotePidsColor)."'";
+        }
+        $selectedproducts=[];
+        $productdata=[];
+        $childproids=implode(",",$sampleIdArray);
+        foreach ($sampleIdArray as $pid) {     
+            $_cProduct=$block->getLoadProduct($pid);    
+            $sku=$_cProduct->getSampleProductSku();
+            $_sProduct=$block->getProductBySku($sku);       
+            if ($_sProduct) {
+                if (in_array($_sProduct->getId(), $quotePids)) {
+                    $selectedproducts[]=$_sProduct->getId();
+                }
+                /*$selectedproducts=array_unique($selectedproducts);
+                $pids=implode(',', $selectedproducts); */
+                // add canto image code
+                $cantoImage = $cantoImageHelper->getMainImageUrl($_cProduct);
+                if ($cantoImage!="") {
+                    $imagesDimensionSmall = $cantoImageHelper->getThumbnailImageDimension();
+                    $imagesDimensionMedium = $cantoImageHelper->getSmallImageDimension();
+                    $smallImage = $cantoImage.'/-B'.$imagesDimensionSmall;
+                    $mediumImage = $cantoImage.'/-B'.$imagesDimensionMedium;
+                    $pdata['small'] = $smallImage;
+                    $pdata['medium'] = $mediumImage;
+                } else {
+                    $placeHolderImage = $imageDcwHelper->getDefaultPlaceholderUrl('thumbnail');
+                    $pdata['small'] = $placeHolderImage;
+                    $pdata['medium'] = $placeHolderImage;
+                }
+                // end canto image code
+                //$pdata['small'] = $block->getProductImageUrl($_cProduct, 'product_page_image_small');
+                //$pdata['medium'] = $block->getProductImageUrl($_cProduct, 'product_base_image');
+                $childprice = $_sProduct->getPriceInfo()->getPrice('final_price')->getAmount()->getValue();
+                $pdata['childprice'] = '<span>'.$curSymbol.$childprice.'</span>';
+                $pdata['id']=$_sProduct->getId();
+                $pdata['child_id']=$pid;
+                $pdata['name']=$escaper->escapeHtml(__($_sProduct->getName()));
+                //$pdata['name']=$escaper->escapeHtml(__($_cProductName[$sku])); //Added by RKM 30th April 2023
+                $pdata['color']=$_cProduct->getData('color');
+                $pdata['color_name']=$_cProduct->getResource()->getAttribute('color')->getFrontend()->getValue($_cProduct);
+                $productdata[]=$pdata;
+            }
+        }
+        $priceType = FinalPrice::PRICE_CODE;
+        $arguments = [
+            'include_container'     => true,
+            'display_minimal_price' => true,
+            'list_category_page'    => true,
+            'zone'                  => Render::ZONE_ITEM_LIST,
+        ];
+
+        $priceRender = $this->getLayout()->createBlock(
+            \Magento\Framework\Pricing\Render::class,
+            'product.price.render.default',
+            ['data' => ['price_render_handle' => 'catalog_product_prices']]
+        );
+        $pricehtml = '';
+        if ($priceRender) {
+            $pricehtml = $priceRender->render($priceType, $_product, $arguments);
+        }
+?>
+ 
+<div class="order_sample"  x-data="{mainproduct:<?= /** @noEscape */$productId?>, inputValue: 0, colors:[], spidsColors:[], productids: [<?= /** @noEscape */$spids_color?>],imageUrl: '<?=/** @noEscape */$mainImageData?>',
+productname:'<?= $escaper->escapeHtml(__($_product->getName())) ?>',
+productprice:'<?= /** @noEscape */$priceHtml ?>'}">
+
+<?php echo $this->getLayout()->createBlock("Magento\Framework\View\Element\Template")->setTemplate("Magento_Theme::html/messages.phtml")->toHtml() ?>
+<?php echo $this->getLayout()->createBlock("Magento\Framework\View\Element\Messages")->setTemplate("Magento_Theme::messages.phtml")->toHtml() ?>
+<div class="left relative mb-6 sm:mb-4" >
+<h2><?= $escaper->escapeHtml(__('Order Free Samples')) ?></h2> 
+
+<div  class="gallery-placeholder _block-content-loading"   >
+    <img :src="imageUrl" alt="Image">
+</div>
+
+<div >
+ <a href="<?=/** @noEscape */$_product->getProductUrl()?>"><strong class="product name product-item-name" x-text="productname"></strong></a>
+ <!-- <div x-html="productprice" class="price "></div>-->
+ 
+<div class="text-gray-900" >
+    <?=/** @noEscape */ $pricehtml?>
+</div>
+ 
+    </div>
+    
+    <strong class="viewproduct">
+      <a href="<?=/** @noEscape */$_product->getProductUrl()?>"><h2><?= $escaper->escapeHtml(__('View Product Details')) ?></h2></a>               
+   </strong> 
+    
+    <div class="sample_notes">
+    <div>
+    <h2><?= $escaper->escapeHtml(__('Free Samples')) ?></h2> 
+    </div>
+    <div class="notebody">
+    <ul>
+    <li><?= $escaper->escapeHtml(__('Your first 3 samples are FREE')) ?></li>
+    <li><?= $escaper->escapeHtml(__('$0.50 for each additional sampl')) ?></li>
+    <li><?= $escaper->escapeHtml(__('To order more than 15 samples, please call (866) 416 6388')) ?></li>
+    </ul>
+    </div>
+    </div>
+    
+</div>
+<div class="right relative mb-6">
+<div>
+<div>
+<input type="hidden" x-model="inputValue">
+        <?php 
+        $check_duplicate_color = array();
+        foreach ($productdata as $single) {
+            if(!in_array($single['color_name'],$check_duplicate_color))
+            {
+                $check_duplicate_color[] = $single['color_name'];
+                $color_pid = $single['child_id']."~".$single['color_name'];
+                $color_spid = $single['id']."~".$single['color_name'];
+                ?>
+                <div x-data="{ checked:productids.includes('<?= /* @noEscape */$color_spid?>')}" 
+                    x-on:click="checked = !checked, 
+                    (checked == true) ? productids.push('<?= $color_spid?>') : 
+                    productids.splice(productids.indexOf('<?=$color_spid?>'), 1),
+                    (checked == true) ? colors.push('<?= $color_pid?>') : 
+                    colors.splice(colors.indexOf('<?= $color_pid?>'), 1),
+                    (checked == true) ? spidsColors.push('<?= $color_spid?>') : 
+                    spidsColors.splice(spidsColors.indexOf('<?= $color_spid?>'), 1),
+                    imageUrl = (checked == true) ? '<?= /** @noEscape */$single['medium']?>' : '<?= /** @noEscape */$mainImageData?>',
+                    productname = (checked == true) ? '<?= /** @noEscape */$single['name']?>' :
+                    '<?= $escaper->escapeHtml(__($_product->getName())) ?>',
+                    productprice = (checked == true) ? '<?=/** @noEscape */$single['childprice']?>' : '<?=/** @noEscape */ $priceHtml ?>'
+                    " x-bind:class="{ 'border': checked, '': !checked }" id="color_check_<?=(int)$single['id']?>">
+                    <input class="" type="checkbox" x-model="productids"  :value="'<?= /* @noEscape */$color_spid?>'" /> 
+                    <div class="product-info">
+                        <div class="color_swatches"  style="height: 111px;width: 111px; border-radius: 6px; margin: 0 !important;display: block !important;">
+                            <img class="product-image-small" src="<?php echo  $single['small'] ?>"  title="<?= /** @noEscape */$single['color_name']?>">
+                        </div>    
+                        <div class="mt-2 mb-1 items-center justify-center text-primary font-semibold text-lg text-center ">
+                            <strong class="product name product-item-name">
+                                    <?= /** @noEscape */$single['color_name']?>                    
+                            </strong>
+                        </div>    
+                    </div>
+                </div> 
+<?php       
+            }             
+        
+    }       
+?>
+
+</div>
+</div>
+</div>
+<?php
+
+if (count($selectedproducts)) {?>
+<button type="button" x-on:click="inputValue = 2,samplesubmit(mainproduct,inputValue,productids,colors,spidsColors,'<?= $escaper->escapeHtml(__($_product->getName()))?>','<?= $escaper->escapeHtml(__($_product->getId()))?>','<?= $escaper->escapeHtml(__($childproids))?>')" 
+class="inline-flex shrink-0 ml-auto xl:mt-0 btn btn-primary leftremovebutton" id="removesampleproduct">
+            <?= $escaper->escapeHtml(__('Remove Sample')) ?>
+</button>
+<?php }?>
+<button type="button" x-on:click="inputValue = 1,samplesubmit(mainproduct,inputValue,productids,colors,spidsColors,'<?= $escaper->escapeHtml(__($_product->getName()))?>','<?= $escaper->escapeHtml(__($_product->getId()))?>','<?= $escaper->escapeHtml(__($childproids))?>')" 
+ class="inline-flex shrink-0 ml-auto xl:mt-0 btn btn-primary rightremovebutton" id="addsampleproduct">
+        <?= $escaper->escapeHtml(__('Add to Cart')) ?>
+</button>
+</div>
+    <?php } ?>
+<?php }
+
+?>
+<script>
+
+</script>

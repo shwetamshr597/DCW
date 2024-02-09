@@ -1,0 +1,52 @@
+<script>
+require([
+    'jquery',
+    'Magento_Ui/js/modal/modal'
+],function($, modal) {
+   
+    var options = {
+        type: 'popup',
+        responsive: true,
+        innerScroll: true,
+        modalClass: 'order-restriction-popup',
+        //buttons: false,
+        title: 'Unable to place order',
+        keyEventHandlers: {
+            escapeKey: function () { return; } // escape key disable
+        }
+    };
+
+    var order_restriction_popup = modal(options, $('#popup-order-restriction'));
+       
+    $('.checkout-container').on('click','#shipping-method-buttons-container .continue', function(){
+        jQuery('body').trigger('processStart');
+        var customer_address_id =$('.shipping-address-items .shipping-address-item.selected-item').attr('id');
+        jQuery.ajax({
+            data:'customer_address_id='+customer_address_id+'&'+$( "#checkout-step-shipping .form-login" ).serialize()+'&'+$( "#co-shipping-form" ).serialize(),
+            type:'post',
+            url:'<?= $block->getUrl()?>orderrestrictions/index/checkrestriction',
+                //async:false,
+                dataType:	'json',
+            success:function(response){
+                if(response.rule_result == 1){
+                    $('#popup-order-restriction').modal('openModal');
+                    $('#popup-order-restriction .popup-order-restriction-msg').html(response.message);
+                }else{
+                    $('#co-shipping-method-form').submit();
+                }
+                jQuery('body').trigger('processStop');
+            },
+            error:function (XMLHttpRequest, textStatus, errorThrown) {
+                if (textStatus == 'timeout'){}
+                else if (textStatus == 'error'){}
+                else if (textStatus == 'parsererror'){}
+            }
+        });
+
+    })
+});
+</script>
+
+<div id="popup-order-restriction">
+    <div class="popup-order-restriction-msg"></div>
+</div>

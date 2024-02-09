@@ -1,0 +1,482 @@
+<?php
+/**
+ * Hyvä Themes - https://hyva.io
+ * Copyright © Hyvä Themes 2020-present. All rights reserved.
+ * This product is licensed per Magento install
+ * See https://hyva.io/license
+ */
+
+declare(strict_types=1);
+
+use Hyva\Theme\Model\ViewModelRegistry;
+use Hyva\Theme\ViewModel\ProductStockItem;
+use Magento\Catalog\Block\Product\View;
+use Magento\Catalog\Model\Product;
+use Magento\Framework\Escaper;
+
+// phpcs:disable Generic.WhiteSpace.ScopeIndent.Incorrect
+
+/** @var View $block */
+/** @var Escaper $escaper */
+/** @var ViewModelRegistry $viewModels */
+
+/** @var Product $product */
+$product = $block->getProduct();
+
+/** @var ProductStockItem $stockItemViewModel */
+$stockItemViewModel = $viewModels->require(ProductStockItem::class);
+$minSalesQty        = $stockItemViewModel->getMinSaleQty($product);
+$maxSalesQty        = $stockItemViewModel->getMaxSaleQty($product);
+
+$maxSalesQtyLength  = ($maxSalesQty ? strlen((string) $maxSalesQty) : 4)
+    + (/* add one if decimal for separator */
+    (int) $stockItemViewModel->isQtyDecimal($product));
+
+$step = $stockItemViewModel->getQtyIncrements($product)
+    ? $stockItemViewModel->getQtyIncrements($product)
+    : null;
+
+$flooringCalculationBlock = $block->getLayout()->createBlock(\Dcw\FlooringCalculation\Block\Index::class);
+$flooringCalculationHelper = $flooringCalculationBlock->flooringCalculationHelper();
+?>
+<?php if ($block->shouldRenderQuantity()): ?>
+    <script>
+        function initQtyField() {
+
+            function findPathParam(key) {
+                // get all path pairs after BASE_URL/front_name/action_path/action
+                const baseUrl = (BASE_URL.substr(0, 2) === '//' ? 'http:' : '') + BASE_URL;
+                const baseUrlParts = (new URL(baseUrl)).pathname.replace(/\/$/, '').split('/');
+                const pathParts = window.location.pathname.split('/').slice(baseUrlParts.length + 3);
+                for (let i = 0; i < pathParts.length; i += 2) {
+                    if (pathParts[i] === key && pathParts.length > i) {
+                        return pathParts[i + 1];
+                    }
+                }
+            }
+
+            return {
+                qty: <?= $block->getProductDefaultQty() * 1 ?>,
+                itemId: (new URLSearchParams(window.location.search)).get('id') || findPathParam('id'),
+                productId: '<?= (int)$product->getId() ?>',
+                <?php // populate the qty when editing a product from the cart ?>
+                onGetCartData: function onGetCartData(data, $dispatch) {
+                    const cart = data && data.data && data.data.cart;
+                    const quotecart = data && data.data && data.data.quotecart; 
+                    if (this.itemId && cart && cart.items || this.itemId && quotecart && quotecart.items) {
+                        const cartItem = cart.items.find((item) => {
+                            return item.item_id === this.itemId && item.product_id === this.productId;
+                        });
+                        const quotecartItem = quotecart.items.find((item) => {
+                            return item.item_id === this.itemId && item.product_id === this.productId;
+                        });
+                        if (cartItem && cartItem.qty) { 
+                            this.qty = cartItem.qty;
+                            this.total_qty = cartItem.qty;
+                            this.total_qty_case = cartItem.qty;
+                        } else  {
+                            this.qty = quotecartItem.qty;
+                            this.total_qty = quotecartItem.qty;
+                            this.total_qty_case = quotecartItem.qty;   
+                        }
+                        this.total_price = hyva.formatPrice(
+                                        parseFloat(this.total_qty) *
+                                        (parseFloat(this.final_price)*
+                                            parseFloat(this.coverage_per_case)).toFixed(2));
+                                            
+                                            
+                        this.total_price_number =  parseFloat(this.total_qty) *
+                                        (parseFloat(this.final_price)*
+                                            parseFloat(this.coverage_per_case)).toFixed(2);
+                                            
+
+
+                        this.total_regular_price = hyva.formatPrice(
+                                                parseFloat(this.total_qty) *
+                                                (parseFloat(this.regular_price)*
+                                                    parseFloat(this.coverage_per_case)).toFixed(2));
+                        $dispatch('update-qty-' + this.productId, this.qty);
+
+                        var custompice =  this.total_price.replace('$','');			
+                        document.getElementById('pdp_hide_price').value = custompice;
+                        
+                    }
+                }
+            };
+        }
+        
+        function flooringCalcDetails() {
+                return {
+                    square_footage:'',
+                    <?php if ($product->getAttributeText('product_floor_type') == 'Carpet Tiles'):?>
+                    length:'',
+                    width:'',
+                    <?php endif; ?>
+                    coverage_per_case: <?= /* @noEscape */ ($product->getCoveragePerCase())?
+                                    $product->getCoveragePerCase():'false'?>,
+                    final_price: initPrice<?= /* @noEscape */ (int)$product->getId() ?>().getFinalPrice(),
+                    regular_price: initPrice<?= /* @noEscape */ (int)$product->getId() ?>().getRegularPrice(),
+                    is_check_overage_percent:<?= ($product->getOveragePercent())?'true':'false'?>,
+                    overage_percent: '<?= /* @noEscape */ $product->getOveragePercent()?>',
+                    total_qty: 1,
+                    total_qty_case:1,
+                    total_coverage_sqft:'',
+                    total_price:'',
+					total_price_number:0,
+                    total_regular_price:'',
+                    showPriceSummary: false,
+                    tile_size_area_text:'',
+                    <?php if ($product->getAttributeText('product_floor_type') == 'Carpet Tiles'):?>
+                    lengthKeyup: function () {
+                        var regexp = /^\d*\.?\d*$/;
+                        var isValidated = regexp.test(this.length);
+                        if (isValidated && this.length != '') {
+                            this.square_footage = '';
+                            if (this.width > 0 && this.width != '') {
+                                    var calculatesquare_footage =  (parseFloat(this.length) * parseFloat(this.width));
+                                    var qty_calc = 1;
+                                    var total_square_footage = parseFloat(calculatesquare_footage);
+                                    if(this.is_check_overage_percent){
+                                    var extra_square_footage_overage = (parseFloat(calculatesquare_footage)*
+                                                                    parseFloat(this.overage_percent))/100;
+                                    total_square_footage = parseFloat(calculatesquare_footage) +
+                                                            parseFloat(extra_square_footage_overage);
+                                    }
+                                    qty_calc = parseFloat(total_square_footage)/parseFloat(this.coverage_per_case);
+                                    qty_calc = Math.ceil(qty_calc);
+                                    this.calc_total_qty_sqft_price_func(qty_calc);
+                            }
+                        } else {
+                            this.length = '';
+                        }
+                    },
+                    widthKeyup: function () {
+                        var regexp = /^\d*\.?\d*$/;
+                        var isValidated = regexp.test(this.width);
+                        if (isValidated && this.width != '') {
+                            this.square_footage = '';
+                            if (this.length > 0 && this.length != '') {
+                                var calculatesquare_footage =  (parseFloat(this.length) * parseFloat(this.width));
+                                var qty_calc = 1;
+                                var total_square_footage = parseFloat(calculatesquare_footage);
+                                if(this.is_check_overage_percent){
+                                var extra_square_footage_overage = (parseFloat(calculatesquare_footage)*
+                                                                parseFloat(this.overage_percent))/100;
+                                total_square_footage = parseFloat(calculatesquare_footage) +
+                                                        parseFloat(extra_square_footage_overage);
+                                }
+                                qty_calc = parseFloat(total_square_footage)/parseFloat(this.coverage_per_case);
+                                qty_calc = Math.ceil(qty_calc);
+                                this.calc_total_qty_sqft_price_func(qty_calc);
+                            }
+                        } else {
+                             this.width = '';
+                        }
+                    },
+                    <?php endif; ?>
+                    squareFootageKeyup: function () {
+                        //alert(this.square_footage);
+                        var regexp = /^\d*\.?\d*$/;     ///^\d+(\.\d{1,2})?$/;
+                        var isValidated = regexp.test(this.square_footage);
+                       
+                        if (isValidated && this.square_footage != '') {
+                    <?php if ($product->getAttributeText('product_floor_type') == 'Carpet Tiles'):?>
+                    this.length = '';
+                    this.width = '';
+                    <?php endif; ?>
+                          // console.log(this.square_footage+' = isValidated');
+                           var qty_calc = 1;
+                           var total_square_footage = parseFloat(this.square_footage);
+                            if(this.is_check_overage_percent){
+                                var extra_square_footage_overage = (parseFloat(this.square_footage)*
+                                                                parseFloat(this.overage_percent))/100;
+
+                                total_square_footage = parseFloat(this.square_footage) +
+                                                        parseFloat(extra_square_footage_overage);
+                            }
+                            qty_calc = parseFloat(total_square_footage)/parseFloat(this.coverage_per_case);
+                            qty_calc = Math.ceil(qty_calc);
+                            this.calc_total_qty_sqft_price_func(qty_calc);
+                        } else {
+                             //this.square_footage = this.last_valid_value;
+                             this.square_footage = '';
+                           //console.log(this.square_footage+' = isNotValidated');
+                           //this.square_footage = this.square_footage.substring(0,this.square_footage.length - 1);
+                        }
+                    },
+                    overagePercent:  function () {
+                        if (this.square_footage) {
+                            var qty_calc = 1;
+                            var total_square_footage = parseFloat(this.square_footage);
+                            if(this.is_check_overage_percent){
+                                var extra_square_footage_overage = (parseFloat(this.square_footage)*
+                                                                parseFloat(this.overage_percent))/100;
+
+                                total_square_footage = parseFloat(this.square_footage) +
+                                                        parseFloat(extra_square_footage_overage);
+                            }
+                            qty_calc = parseFloat(total_square_footage)/parseFloat(this.coverage_per_case);
+                            qty_calc = Math.ceil(qty_calc);
+                            this.calc_total_qty_sqft_price_func(qty_calc);
+                        }
+
+                    <?php if ($product->getAttributeText('product_floor_type') == 'Carpet Tiles'):?>
+                        if (this.width > 0 && this.width != '' && this.length > 0 && this.length != '') {
+                                var calculatesquare_footage =  (parseFloat(this.length) * parseFloat(this.width));
+                                var qty_calc = 1;
+                                var total_square_footage = parseFloat(calculatesquare_footage);
+                                if(this.is_check_overage_percent){
+                                var extra_square_footage_overage = (parseFloat(calculatesquare_footage)*
+                                                                parseFloat(this.overage_percent))/100;
+                                total_square_footage = parseFloat(calculatesquare_footage) +
+                                                        parseFloat(extra_square_footage_overage);
+                                }
+                                qty_calc = parseFloat(total_square_footage)/parseFloat(this.coverage_per_case);
+                                qty_calc = Math.ceil(qty_calc);
+                                this.calc_total_qty_sqft_price_func(qty_calc);
+
+                        }
+                    <?php endif; ?>
+
+                    },
+                    qtyUpdate:  function () {
+                        if (this.total_qty < 1 ||this.total_qty == '') {
+                                this.total_qty = 1;
+                            }
+                        this.calc_total_qty_sqft_price_func(this.total_qty);
+						document.getElementById("pdp-p-data").value = this.total_price_number;
+                    },
+                    decrement:  function () {
+                        if (this.total_qty > 1) {
+                                this.total_qty--;
+                            }
+                        this.calc_total_qty_sqft_price_func(this.total_qty);
+                    },
+                    increment:  function () {
+                        this.total_qty++;
+                        this.calc_total_qty_sqft_price_func(this.total_qty);
+                    },
+                    updateTotalQtySqftPriceOnPageLoad:  function () {
+                        <?php if (empty($flooringCalculationHelper->isCartConfigurePdp())) {?>
+                            <?php  if(!isset($_REQUEST['color'])) { ?>
+                        var CONTROL_INTERVAL = setInterval(function(){
+                            if(document.querySelector('.product-option-value-input')){
+                                document.querySelectorAll('.product-option-values').forEach(function(option_box) {
+                                    option_box.querySelector('.product-option-value-input').click();
+                                });
+                                clearInterval(CONTROL_INTERVAL);
+                            }
+                        }, 100);
+                        <?php }?>
+                        <?php }?>
+                        //this.calc_total_qty_sqft_price_func(1);
+                    },
+                    calc_total_qty_sqft_price_func:   function (qty_calc) {
+                    
+                        this.total_qty = qty_calc;
+                        this.total_qty_case = qty_calc;
+                        this.total_coverage_sqft = (parseFloat(this.coverage_per_case) *
+                                                    parseFloat(qty_calc)).toFixed(2);
+                        this.total_price = hyva.formatPrice(
+                                                            parseFloat(qty_calc) *
+                                                            (parseFloat(this.final_price)*
+                                                             parseFloat(this.coverage_per_case)).toFixed(2));
+						this.total_price_number =  parseFloat(qty_calc) *
+                                                            (parseFloat(this.final_price)*
+                                                             parseFloat(this.coverage_per_case)).toFixed(2);
+                        this.total_regular_price = hyva.formatPrice(
+                                                                    parseFloat(qty_calc) *
+                                                                    (parseFloat(this.regular_price)*
+                                                                     parseFloat(this.coverage_per_case)).toFixed(2));
+																	 								 
+                        
+									
+					},
+                    addToCartClickVerify:   function () {
+                        this.total_price_number = (parseFloat(this.final_price)*
+                                                             parseFloat(this.coverage_per_case)).toFixed(2);
+						var selected_option_child_id = document.querySelector('input[name="selected_option_child_id"]').value;
+						var shiptotext = document.getElementById("s-ships").innerHTML;
+						document.getElementById("pdp-p-data").value = this.total_price_number;
+                        //Add code for Line item 
+                        var pricePerSqft = this.final_price; 
+                        var length  = this.length ?? 0;
+                        var width = this.width ?? 0;
+                        var tileSize = this.tile_size_area_text;
+                        var covers = this.coverage_per_case;
+                        <?php if ($product->getAttributeText('product_floor_type') == 'Carpet Tiles'):?>
+                        var squareFootage = length*width;
+                        <?php else: ?>
+                        var squareFootage = document.getElementById("square_footage").value;
+                        <?php endif; ?>
+						window.dispatchEvent(new CustomEvent('amcart-loading-start'));
+						fetch(BASE_URL+'flooring/index/cartpost?form_key=' + hyva.getFormKey(), {
+							method: "POST",
+							headers: { "content-type": "application/x-www-form-urlencoded; charset=UTF-8" },
+							body: "main_product_id=<?= /* @noEscape */ $product->getId() ?>&product_floor_type=Carpet Tiles&selected_option_child_id="+selected_option_child_id+"&qty="+this.total_qty+"&ship_to_text="+shiptotext+"&custom_price="+this.total_price_number+"&pricePerSqft="+pricePerSqft+"&tileSize="+tileSize+"&covers="+covers+"&squareFootage="+squareFootage+"&length="+length+"&width="+width,
+						})
+						.then(response => {
+                             /*setTimeout(() => {
+                               console.log("View Change 224");
+                                var element = document.getElementById('products_slider');
+                                const offset = 100; // Adjust this value as needed
+                                const targetPosition = element.offsetTop - offset;
+                                
+                                window.scrollTo({
+                                top: targetPosition,
+                                behavior: "smooth" // You can use "auto" or "smooth" scrolling behavior
+                                });
+                                console.log(element.offsetTop);
+                                console.log(targetPosition);
+                            }, 1000); */
+							window.dispatchEvent(new CustomEvent('reload-customer-section-data'));
+                            
+                            if (document.querySelector('.related-product-dialog-wrapper')) {
+                                window.dispatchEvent(
+                                    new CustomEvent('hyva-modal-show', {detail: {dialog: 'related-product-slider-dialog'}})
+                                ); 
+                            }
+						})
+						.then(data => {
+							window.dispatchEvent(new CustomEvent('reload-customer-section-data'));
+							window.dispatchEvent(new CustomEvent('amcart-loading-stop'));
+						});
+                    }
+                }
+        }
+        
+    </script>
+    
+    <div class="all_total_calc_section">
+        <div class="all_total_calc_section_in bg-white rounded-md ">
+            <div class="calc_content flex items-center">
+                <div class="calc_content_left">
+                    <img src="<?= /* @noEscape */ $block->getViewFileUrl('images/calc.png'); ?>"
+                                  alt="calc" width="41" height="47">
+                </div>
+                <div class="calc_content_right">
+                    <div class="calculator-header text-size19 font-semibold text-black">
+                        How much flooring will you need?
+                    </div>
+                </div>
+            </div>
+            
+
+           
+
+             <div class="length_width_square_footage_field_area flex flex-wrap w-full justify-between">
+                 <?php if ($product->getAttributeText('product_floor_type') == 'Carpet Tiles'):?>
+                <div class="length_width_field_area flex flex-nowrap align-center">
+                    <div class="length_sec">
+                        <label for="square_footage" class="text-size14 font-semibold text-black text-center block">
+                            Length
+                        </label>
+                        <div class="length_sec_in flex flex-nowrap align-center">
+                            <button x-on:click="decrement_length()"
+                                class="qty-decrement inter text-size18 font-semibold text-black md:mr-5">-</button>
+                            <input type="text" id="square_footage"
+                                class="input-text" name="length" value=""
+                                x-model="length" x-on:keyup="lengthKeyup" autocomplete="off"/>
+                            <button x-on:click="increment_length()"
+                                class="qty-increment inter text-size18 font-semibold text-black">+</button>
+                        </div>
+                    </div>
+                    <div class="width_sec">
+                        <label for="square_footage" class="text-size14 font-semibold text-black text-center block">
+                            Width
+                        </label>
+                        <div class="length_sec_in flex flex-nowrap align-center">
+                            <button x-on:click="decrement_width()"
+                                class="qty-decrement inter text-size18 font-semibold text-black md:mr-5">-</button>
+                            <input type="text" id="square_footage"
+                                class="input-text" name="width" value=""
+                                x-model="width" x-on:keyup="widthKeyup" autocomplete="off"/>
+                            <button x-on:click="increment_width()"
+                                class="qty-increment inter text-size18 font-semibold text-black">+</button>
+                        </div>
+                    </div>
+                </div>
+            <?php endif; ?>
+                <div class="square_footage_sec">
+                    <label for="square_footage" class="text-size14 font-semibold text-black text-center block">
+                        Square Footage
+                    </label>
+                    <input type="text" id="square_footage" class="input-text" name="square_footage" value=""
+                        x-validate.number x-model="square_footage" x-on:keyup="squareFootageKeyup" autocomplete="off"/>
+                </div>
+            </div>
+        </div>
+        <div x-data="initQtyField()"
+            class="quantity-container flex items-center mb-6">
+            <?php if ($product->isSaleable()): ?>
+                <div class="flex items-center" x-show="coverage_per_case > 0 && coverage_per_case !=''">
+                    <label for="qty[<?= (int)$product->getId() ?>]"
+                        class="inter text-size18 font-semibold text-black md:mr-5"
+                    >
+                        <?= $escaper->escapeHtml(__('Quantity')) ?>
+                    </label>
+                    <button x-on:click="decrement()"
+                            class="qty-decrement inter text-size18 font-semibold text-black md:mr-5">-</button>
+                    <input name="qty"
+                        @private-content-loaded.window="onGetCartData($event.detail, $dispatch)"
+                        id="qty[<?= (int)$product->getId() ?>]"
+                        form="product_addtocart_form"
+                        <?php if ($stockItemViewModel->isQtyDecimal($product)): ?>
+                        type="text"
+                        pattern="[0-9](\.[0-9])?{0,<?= /** @noEscape */ $maxSalesQtyLength ?>}'"
+                        inputmode="decimal"
+                        <?php else: ?>
+                        type="text"
+                        pattern="[0-9]{0,<?= /** @noEscape */ $maxSalesQtyLength ?>}"
+                        inputmode="numeric"
+                        <?php if ($minSalesQty): ?>min="<?= /** @noEscape */ $minSalesQty ?>"<?php endif; ?>
+                        <?php if ($maxSalesQty): ?>max="<?= /** @noEscape */ $maxSalesQty ?>"<?php endif; ?>
+                        <?php if ($step): ?>step="<?= /** @noEscape */ $step ?>"<?php endif; ?>
+                        <?php endif; ?>
+                        :value="qty"
+                        class="form-input md:mr-5 bg-transparent invalid:ring-2 invalid:ring-red-500"
+                        x-model.number="total_qty"
+                        x-on:change="qtyUpdate"
+                        @change="$dispatch('update-qty-<?= (int)$product->getId() ?>', qty)"
+                    />
+                    <button x-on:click="increment()"
+                            class="qty-increment inter text-size18 font-semibold text-black">+</button>
+                </div>
+            <?php endif; ?>
+            <div class="unit_equals_sqft text-size14 font-normal text-black pl-6 ml-2" 
+            x-show="showPriceSummary == 1 && tile_size_area_text">
+                (<span x-text="tile_size_area_text"></span>)
+            </div>
+        </div>
+        
+        <div class="price-summary-container flex justify-between bg-white rounded-md relative"
+             x-show="showPriceSummary == 1 && (coverage_per_case > 0 && coverage_per_case !='')">
+            <div class="left">
+                <div class="total-case">
+                    <span x-text="total_qty_case" class="inter text-size28 font-medium text-black mr-1"></span>
+                    <span class="inter text-size16 font-normal text-black">cases</span>
+                </div>
+                <div class="total-coverageSqft hidden">Covers <span x-text="total_coverage_sqft"></span> sqft</div>
+                <?php if (!empty($product->getOveragePercent())) {?>
+                    <div class="overage_percent_sec flex items-center mt-5">
+                        <input type="checkbox" id="overage_percent" name="overage_percent"
+                            x-model="is_check_overage_percent" x-on:change="overagePercent" value=""/>
+                        <label for="overage_percent" class="inter text-size14 font-normal text-black">
+                            Include extra <?= /* @noEscape */ $product->getOveragePercent()?>%
+                            <img src="<?= /* @noEscape */ $block->getViewFileUrl('images/mark1.png'); ?>" alt="mark1"
+                                width="15" height="15" class="ml-1 inline-block align-text-top">
+                        </label>
+                    </div>
+                <?php }?>
+            </div>
+            <div class="right your_price flex">
+                <div class="inter text-size16 font-medium text-black price_left">Your price</div>
+                <div class="total-price-info ml-6">
+                    <div class="total-regular-price inter line-through text-size14 font-normal text-custom-blue"
+                        x-show="total_price!=total_regular_price" x-text="total_regular_price"></div>
+                    <div class="total-price inter text-size21 font-bold text-custom-blue" x-text="total_price" id ="pdp-price"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+<?php endif; ?>

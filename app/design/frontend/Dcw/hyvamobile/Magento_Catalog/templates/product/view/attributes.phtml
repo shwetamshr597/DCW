@@ -1,0 +1,179 @@
+<?php
+/**
+ * Hyvä Themes - https://hyva.io
+ * Copyright © Hyvä Themes 2020-present. All rights reserved.
+ * This product is licensed per Magento install
+ * See https://hyva.io/license
+ */
+
+declare(strict_types=1);
+
+use Magento\Framework\Escaper;
+use Magento\Catalog\Helper\Output as CatalogOutputHelper;
+use Magento\Catalog\Block\Product\View\Attributes;
+use Magento\Catalog\Model\Product;
+
+// phpcs:disable Magento2.Templates.ThisInTemplate.FoundHelper
+
+/** @var Escaper $escaper */
+/** @var CatalogOutputHelper $output */
+/** @var Attributes $block */
+
+
+/** @var CatalogOutputHelper $catalogOutputHelper */
+$catalogOutputHelper = $this->helper(CatalogOutputHelper::class);
+
+/** @var Product $product */
+$product = $block->getProduct();
+?>
+
+
+<?php  $attributes = $block->getAdditionalData(); ?>
+ <?php $description=$catalogOutputHelper->productAttribute($product, $product->getDescription(), 'description'); ?>
+<?php 
+$sizeAttribute='approximate_tile_size,product_thickness,wear_layer_thickness,product_length,product_width';
+$showindecAtt='min_tile_quantity,antimicrobial,application_location,cases_per_pallet,color_family,color_finish,commercial_residential,edge_type,features_text,flooring_look,flooring_product_type,gloss,indoor_outdoor,installation_method,installs_over_subfloor,location,material';
+$tabshowattributes='description,shipping_and_returns,installation,maintenance,warranty';
+$tabshowattributesArray=explode(',',$tabshowattributes);
+$sizeAttributeAttArray=explode(',',$sizeAttribute);
+$showindecAttArray=explode(',',$showindecAtt);
+$attributes = $product->getAttributes();
+$decOtherAttHtml='<ul>';
+$sizeAttributeHtml='<ul>';
+$sizechild=0;
+$deschildv=0;
+foreach($attributes as $attribute){
+   if (in_array($attribute->getAttributeCode(), $sizeAttributeAttArray) && $attribute->getFrontend()->getValue($product)){
+   $sizechild=1;
+   $sizeAttributeHtml.='<li>';
+   $sizeAttributeHtml.='<label>'.$attribute->getStoreLabel().'</label>';
+   $sizeAttributeHtml.='<span>'.$attribute->getFrontend()->getValue($product).'</span>';
+   $sizeAttributeHtml.='</li>';
+   }
+  if (in_array($attribute->getAttributeCode(), $showindecAttArray) && $attribute->getFrontend()->getValue($product)){
+  $deschildv=1;
+  $decOtherAttHtml.='<li>';
+  $decOtherAttHtml.='<label>'.$attribute->getStoreLabel().'</label>';
+  $decOtherAttHtml.='<span>'.$attribute->getFrontend()->getValue($product).'</span>';
+  $decOtherAttHtml.='</li>';
+  }
+}
+
+   $decOtherAttHtml.='</ul>';
+  $sizeAttributeHtml.='</ul>';
+
+  $showindecAttArray=array_merge($showindecAttArray,$sizeAttributeAttArray)
+
+?>
+<?php  $attributes = $block->getAdditionalData();  //print_r($attributes);?>
+
+<?php $description=$catalogOutputHelper->productAttribute($product, $product->getDescription(), 'description'); ?>
+
+<?php 
+
+$selectedtab='';
+if($description || $deschildv || $sizechild){
+  $selectedtab=1;
+}else{
+  foreach ($attributes as $attribute){
+    if (in_array($attribute['code'], $tabshowattributesArray)){
+      if($catalogOutputHelper->productAttribute($product, $attribute['value'], $attribute['code'])){
+        $selectedtab=2; 
+        break;
+      }
+    }
+  }   
+   
+}
+?>
+
+<?php if($selectedtab):?>
+<div class="pro-tab noborder sm:bg-transparent w-screen flex justify-center">
+   <div class="">
+      <div class="noborder sm:bg-transparent max-w-xl mx-auto" x-data="{selected:<?=$selectedtab?>}">
+         <ul class="shadow-box sec-tab">
+          <?php if($description || $deschildv || $sizechild):?>
+          <li class="relative border-b border-gray-200 btm-1">
+               <button type="button" class="w-full text-left" @click="selected !== 1 ? selected = 1 : selected = null">
+                  <div class="flex items-center justify-between text-size20 font-medium py-4"
+                  x-bind:class="{ 'ico-minus-div': selected == 1, 'ico-plus-div': selected != 1}"
+                  >
+                     <span> <?= /* @noEscape */ $escaper->escapeHtml('Details & Specifications') ?></span>
+                     <span x-bind:class="{ 'ico-minus': selected == 1, 'ico-plus': selected != 1}" ></span> 
+                  </div>
+               </button>
+               <div class="relative overflow-hidden transition-all max-h-0 duration-700" style="" x-ref="container1" x-bind:style="selected == 1 ? 'max-height: ' + $refs.container1.scrollHeight + 'px' : ''">
+                  <div class="">
+                     <?=/* @noEscape */ $description ?>
+
+                     <?php if ($sizechild):?>
+                        <div class="productdetailsatt productsizeattribute">
+                           <h3 class="text-size18 font-semibold mb-4">Dimensions</h3>
+                           <?= /* @noEscape */$sizeAttributeHtml?>
+                        </div> 
+                     <?php endif;?>
+                     <?php if ($deschildv):?>
+                        <div class="productdetailsatt sm:mb-10 sm:mt-10">
+                           <h3 class="text-size18 font-semibold mb-4">Details</h3>
+                           <?=/* @noEscape */$decOtherAttHtml?>
+                        </div> 
+                     <?php endif;?>  
+                  </div>
+               </div>
+            </li>
+           <?php endif;?>   
+ <?php  if ($attributes): ?>
+   <?php $i=1;?>
+  <?php foreach ($attributes as $attribute):  ?>
+ <?php if (in_array($attribute['code'], $tabshowattributesArray)):?>
+    <?php  if($catalogOutputHelper->productAttribute($product, $attribute['value'], $attribute['code'])):?>
+     <?php $i=$i+1;?>
+            <li class="relative border-b border-gray-200 btm-1">
+                  <button type="button" class="w-full text-left" @click="selected !== <?=$i?> ? selected = <?=$i?> : selected = null">
+                     <div class="flex items-center justify-between text-size20 font-medium py-4"
+                     x-bind:class="{ 'ico-minus-div': selected == <?=$i?>, 'ico-plus-div': selected != <?=$i?>}"
+                     >
+                        <span>
+                        <?= $escaper->escapeHtml($attribute['label']) ?> </span>
+                        <span x-bind:class="{ 'ico-minus': selected == <?=$i?>, 'ico-plus': selected != <?=$i?>}"></span>
+                     </div>
+                  </button>
+                  <div class="relative overflow-hidden transition-all max-h-0 duration-700" style="" x-ref="container2" x-bind:style="selected == <?=$i?> ? 'max-height: ' + $refs.container2.scrollHeight + 'px' : ''">
+                     <div class="">
+                        <?= /* @noEscape */
+                        $catalogOutputHelper->productAttribute($product, $attribute['value'], $attribute['code']) ?>
+                     </div>
+                  </div>
+               </li>
+       <?php endif;?>
+    <?php endif;?>
+  <?php endforeach;?>
+  <?php endif;?>
+         </ul>
+      </div>
+   </div>
+</div>
+<?php endif;?>
+
+
+<?php $pdpBottomVideo=$catalogOutputHelper->productAttribute($product, $product->getPdpBottomVideo(), 'description'); ?>
+<?php if($pdpBottomVideo):?>
+  <div class="buttomvideos">
+    <h2 class="font-semibold text-size20 text-center pb-6 sm:mt-10">Videos</h2>
+  <?= /* @noEscape */ $pdpBottomVideo ?>
+</div>
+<?php endif;?>
+
+<?php $pdpBottomFeatures=$catalogOutputHelper->productAttribute($product, $product->getPdpBottomFeatures(), 'description'); ?>
+<?php if($pdpBottomFeatures):?>
+   <div class="buttomfeatures">
+    <h2 class="font-semibold text-size20 text-center pb-6">Features</h2>
+  <?= /* @noEscape */ $pdpBottomFeatures ?>
+</div>
+<?php endif;?>
+
+
+
+
+
+

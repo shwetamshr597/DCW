@@ -1,0 +1,324 @@
+<?php
+/**
+ * Hyvä Themes - https://hyva.io
+ * Copyright © Hyvä Themes 2020-present. All rights reserved.
+ * This product is licensed per Magento install
+ * See https://hyva.io/license
+ */
+
+declare(strict_types=1);
+
+use Hyva\Theme\Model\ViewModelRegistry;
+use Hyva\Theme\ViewModel\HeroiconsOutline;
+use Hyva\Theme\ViewModel\HeroiconsSolid;
+use Hyva\Theme\ViewModel\ProductCompare;
+use Hyva\Theme\ViewModel\ProductListItem;
+use Hyva\Theme\ViewModel\ProductPage;
+use Hyva\Theme\ViewModel\Wishlist;
+use Magento\Catalog\Block\Product\AbstractProduct;
+use Magento\Catalog\Helper\Output as CatalogOutputHelper;
+use Magento\Framework\Escaper;
+use Magento\Catalog\ViewModel\Product\OptionsData as ProductOptionsData;
+use Hyva\AmastyRequestQuote\ViewModel\Product\Action;
+use Amasty\RequestQuote\Helper\Data;
+// phpcs:disable Magento2.Templates.ThisInTemplate
+// phpcs:disable Generic.Files.LineLength.TooLong
+
+/** @var AbstractProduct $block */
+/** @var Escaper $escaper */
+/** @var ViewModelRegistry $viewModels */
+
+/** @var ProductPage $productViewModel */
+$productViewModel = $viewModels->require(ProductPage::class);
+
+/** @var ProductListItem $productListItemViewModel */
+$productListItemViewModel = $viewModels->require(ProductListItem::class);
+
+/** @var CatalogOutputHelper $catalogOutputHelper */
+$catalogOutputHelper = $this->helper(CatalogOutputHelper::class);
+
+/** @var ProductCompare $compareViewModel */
+$compareViewModel = $viewModels->require(ProductCompare::class);
+/** @var Wishlist $wishlistViewModel */
+$wishlistViewModel = $viewModels->require(Wishlist::class);
+
+/** @var HeroiconsOutline $heroiconsOutline */
+$heroiconsOutline = $viewModels->require(HeroiconsOutline::class);
+/** @var HeroiconsSolid $heroiconsSolid */
+$heroiconsSolid = $viewModels->require(HeroiconsSolid::class);
+/** @var HeroiconsOutline $heroicons */
+$heroicons = $viewModels->require(HeroiconsOutline::class);
+
+$productOptionsViewmodel = $viewModels->require(ProductOptionsData::class);
+
+/** @var Magento\Catalog\Model\Product $product */
+$product = $block->getData('product');
+$imageDisplayArea = $block->getData('image_display_area');
+$templateType = $block->getData('template_type');
+$viewMode = $block->getData('view_mode');
+$showDescription = $block->getData('show_description');
+$showAddToWishlist = $wishlistViewModel->isEnabled();
+$showAddToCompare = $compareViewModel->showInProductList();
+$viewIsGrid = $viewMode === 'grid';
+
+/** @var Action $quoteActionviewModel */
+$quoteActionviewModel = $viewModels->require(Action::class);
+
+/** @var Data $quoteHelper */
+$quoteHelper = $this->helper(Data::class);
+$objectManager = \Magento\Framework\App\ObjectManager::getInstance();
+    /* Create a new product object */
+$imageHelper = $objectManager->create(Magento\Catalog\Helper\Image::class);
+
+if (!$product) {
+    return '';
+}
+$productId = $product->getId();
+$options   = $productOptionsViewmodel->getOptionsData($product);
+$uniqueId = '_' . uniqid();
+
+$hideDetails       = $block->getData('hide_details') ?: false;
+$hideRatingSummary = $block->getData('hide_rating_summary') ?: false;
+
+$imageCustomAttributes = $product->getData('image_custom_attributes')
+    ?? $block->getData('image_custom_attributes')
+    ?? [];
+    
+$sampleblock= $block->getLayout()->createBlock(Dcw\SampleProduct\Block\SampleData::class);
+    
+?>
+<?php //Add Code for Canto getUrl
+    $cantoImageHelper = \Magento\Framework\App\ObjectManager::getInstance()->get(\Dcw\ProductImage\Helper\Data::class);
+    $imageDcwHelper = \Magento\Framework\App\ObjectManager::getInstance()->get(\Magento\Catalog\Helper\Image::class);
+    $newproduct = $objectManager->create('Magento\Catalog\Model\Product')->load($productId);
+    $cantoImage = $cantoImageHelper->getMainImageUrl($newproduct);
+    if ($cantoImage!="") {
+        $imagesDimensionMedium = $cantoImageHelper->getThumbnailImageDimension();
+        $mainImageData = $cantoImage.'/-B'.$imagesDimensionMedium;
+    } else {
+        $mainImageData = $imageDcwHelper->getDefaultPlaceholderUrl('small_image');
+    }
+    // End Code
+    ?>
+<?php if ($product->isSaleable()): ?>
+<form method="post"
+    action="<?= $escaper->escapeUrl($productViewModel->getAddToCartUrl($product, ['useUencPlaceholder' => true])) ?>"
+    class="item product product-item product_addtocart_form flex flex-col pr-6 m-0 w-full relative align-top <?= $viewIsGrid ? '' : 'md:flex-row' ?>"
+    <?php if ($product->getOptions()): ?>
+    enctype="multipart/form-data"
+    <?php endif; ?>
+>
+    <?= /** @noEscape */ $block->getBlockHtml('formkey') ?>
+    <input type="hidden" name="product" value="<?= (int)$productId ?>"/>
+    <?php foreach ($options as $optionItem): ?>
+    <input type="hidden"
+           name="<?= $escaper->escapeHtml($optionItem['name']) ?>"
+           value="<?= $escaper->escapeHtml($optionItem['value']) ?>">
+    <?php endforeach; ?>
+    <?php else: ?>
+        <!-- item product product-item card card-interactive flex flex-col w-full -->
+<div class="item product product-item product_addtocart_form flex flex-col pr-6 m-0 w-full relative align-top <?= $viewIsGrid ? '' : 'md:flex-row' ?>">
+<?php endif; ?>
+<div class="catergory_slider_content bg-white h-full">
+    <?php 
+    if(!($viewMode == "list"))
+    {
+        if (!empty($product->getAttributeText('product_label')) || $product->getIsBestseller() == 1) {?>
+        <a href="<?= $escaper->escapeUrl($product->getProductUrl()) ?>">
+            <div class="product_lebel_container absolute left-0 top-0">
+                <?php if (!empty($product->getAttributeText('product_label'))) {?>
+                    <span class="product_lebel newarrival_label <?= str_replace(" ","",strtolower($product->getAttributeText('product_label')))?> text-size12 font-semibold text-white text-center"><?= $product->getAttributeText('product_label')?></span>
+                <?php }?>
+                <?php if ($product->getIsBestseller() == 1) {?>
+                    <span class="product_lebel bestseller_label text-size12 font-semibold text-white text-center">
+                        <?php 
+                            echo '# '.$product->getData('best_seller_number');
+                        ?> Seller
+                    </span>
+                    <?php if(is_numeric($product->getData('buy_this_percentage'))){ ?>
+                        <sapn class="buy_this_percentage"><?php  echo $product->getData('buy_this_percentage');?> % Off Buy this </span>
+                    <?php } ?>    
+                <?php }?>
+                <?php if ($product->getIsBestseller() == 1) {?>
+                    <span class="product_lebel bestseller_label text-size12 font-semibold text-white text-center">Best Seller</span>
+                    <span class="product_lebel bestseller_label text-size12 font-semibold text-white text-center">
+                        <?php 
+                            echo '# '.$product->getData('best_seller_number');
+                        ?> Seller
+                    </span>
+                    <?php if(is_numeric($product->getData('buy_this_percentage'))){ ?>
+                        <sapn class="buy_this_percentage"><?php  echo $product->getData('buy_this_percentage');?> % Off Buy this </span>
+                    <?php } ?>    
+                <?php }?>
+            </div>
+        </a>
+    <?php }} ?>
+    <?php if($product->getMarginPercentage() > 0){ ?>
+        <a href="<?= $escaper->escapeUrl($product->getProductUrl()) ?>">
+            <div class="product_lebel_container absolute left-0 top-0 margin_percentage_div">
+                    <span class="product_lebel text-size12 font-semibold text-white text-center"><?= $product->getMarginPercentage() ?>% Margin</span>
+            </div>
+        </a>
+    <?php } ?>
+    <?php /* Product Image */ ?>
+    <a href="<?= $escaper->escapeUrl($product->getProductUrl()) ?>"
+        class="product photo product-item-photo block mx-auto w-full <?= $viewIsGrid ? '' : 'md:w-2/6 md:mb-0 md:mr-5' ?>"
+        tabindex="-1"
+    >
+        <?= $block->getImage($product, $imageDisplayArea)
+            ->setTemplate('Magento_Catalog::product/list/image.phtml')
+            ->setData('custom_attributes', $imageCustomAttributes)
+            ->setProductId($productId)
+            ->toHtml(); ?>
+    </a>
+    <input type="hidden" id="product_name_<?= (int)$productId ?>"  name="product_name_<?= (int)$productId ?>" value="<?= $product->getName() ?>">
+    <input type="hidden" id="product_id_<?= (int)$productId ?>"  name="product_id_<?= (int)$productId ?>" value="<?= $product->getId() ?>">
+    <input type="hidden" id="product_url_<?= (int)$productId ?>" name="product_url_<?= (int)$productId ?>" value="<?= $escaper->escapeUrl($product->getProductUrl()) ?>">
+    <input type="hidden" id="image_url_<?= (int)$productId ?>" name="image_url_<?= (int)$productId ?>" value="<?=/** @noEscape */$mainImageData?>">
+    <div class="product-info flex flex-col grow py-3 px-5">
+        <?php if ($product->getShipNextDay()) {?>
+            <div class="ship-fax">
+                <a class="ship-icon" href="<?= $escaper->escapeUrl($product->getProductUrl()) ?>"></a>
+                <span class="ship-text">Quick Ship</span>
+            </div>
+            <?php } ?>
+            <a href="<?= $escaper->escapeUrl($product->getProductUrl()) ?>">
+                <?php $productNameStripped = $block->stripTags($product->getName(), null, true); ?>
+                <div class="text-primary product-name <?= $viewIsGrid ? '' : 'md:text-left' ?>">
+                    <span class="product-item-link text-size18 text-black font-semibold no-underline relative block"
+                       href="<?= $escaper->escapeUrl($product->getProductUrl()) ?>" title="<?= /* @noEscape */ $catalogOutputHelper->productAttribute($product, $product->getName(), 'name') ?>">
+                        <?= /* @noEscape */ $catalogOutputHelper->productAttribute($product, $product->getName(), 'name') ?>
+                    </span>
+                    
+                </div>
+
+                <?php //if (!$hideRatingSummary): ?>
+                <div class="ratings <?= $viewIsGrid ? '' : 'md:mx-0 md:w-auto' ?>">
+                <div data-bv-show="inline_rating"
+                    data-bv-product-id="<?= $product->getSku(); ?>"
+                    data-bv-redirect-url="<?= $escaper->escapeUrl($product->getProductUrl()) ?>">
+                </div>
+                </div>
+                <?php //endif; ?>
+
+                <?php if ($product->isAvailable() && !$hideDetails && $viewMode=='list'): ?>
+                    <?= $block->getProductDetailsHtml($product) ?>
+                <?php endif; ?>
+
+                <?php if ($showDescription): ?>
+                <div class="mt-2 mb-1 items-center justify-center text-primary content-dis text-center <?= $viewIsGrid ? '' : 'md:text-left' ?>">
+                    <?= /* @noEscape */ $productViewModel->getShortDescriptionForProduct($product) ?>
+                </div>
+                <?php endif; ?>
+            <div class="color_counts">
+                <?php if ($product->getTypeId() == 'configurable' && $viewMode=='grid') {
+                    $_children = $product->getTypeInstance()->getUsedProducts($product);
+                    $config_color_arr = [];
+                    $_children = $product->getTypeInstance()->getUsedProducts($product);
+                    foreach($_children as $_child){
+                        $config_color_arr[] = $_child->getColor();
+                    }
+                    if(!empty($config_color_arr)){
+                    ?>
+                        <div class="color_count text-size14 font-normal text-black">Available in <?= /* @noEscape */ count(array_unique($config_color_arr))?> colors</div>
+                    <?php
+                    }
+                }
+                ?>
+                <?php if (!empty($product->getplp_feature1())) {?>
+                    <div class="color_count text-size14 font-normal text-black"><?php echo $product->getplp_feature1();?></div>
+                <?php }?>
+                <?php if (!empty($product->getPlpFeature2())) {?>
+                    <div class="color_count text-size14 font-normal text-black"><?php echo $product->getPlpFeature2();?></div>
+                <?php }?>
+                <?php if (!empty($product->getPlpFeature3())) {?>
+                    <div class="color_count text-size14 font-normal text-black"><?php echo $product->getPlpFeature3();?></div>
+                <?php }?>
+            <?php if (!empty($product->getPlpFeature4())) {?>
+                    <div class="color_count text-size14 font-normal text-black"><?php echo $product->getPlpFeature4();?></div>
+                <?php }?>
+            <?php if (!empty($product->getPlpFeature5())) {?>
+                    <div class="color_count text-size14 font-normal text-black"><?php echo $product->getPlpFeature5();?></div>
+                <?php }?>
+            <?php if (!empty($product->getPlpFeature6())) {?>
+                    <div class="color_count text-size14 font-normal text-black"><?php echo $product->getPlpFeature6();?></div>
+                <?php }?>
+                </div>
+            </a>
+        <script>
+            function initPriceBox_<?= /** @noEscape */ $uniqueId ?>()
+            {
+                return {
+                    updatePrice(priceData) {
+                        const regularPriceLabel = this.$root.querySelector('.normal-price .price-label');
+                        const regularPriceElement = this.$root.querySelector('.normal-price [data-price-type=finalPrice].price-wrapper .price');
+                        const basePriceElement = this.$root.querySelector('.normal-price [data-price-type=basePrice].price-wrapper .price');
+                        if (priceData.finalPrice.amount < priceData.oldPrice.amount) {
+                            regularPriceLabel.classList.add('hidden');
+                        } else {
+                            regularPriceLabel.classList.remove('hidden');
+                        }
+                        regularPriceElement.innerText = hyva.formatPrice(priceData.finalPrice.amount);
+                        basePriceElement && (basePriceElement.innerText = hyva.formatPrice(priceData.basePrice.amount));
+                    }
+                }
+            }
+        </script>
+        <a href="<?= $escaper->escapeUrl($product->getProductUrl()) ?>">
+            <div class="text-gray-900"
+                 x-data="initPriceBox_<?= /** @noEscape */ $uniqueId ?>()"
+                 @update-prices-<?= (int)$productId ?>.window="updatePrice($event.detail);"
+            >
+                <?= /* @noEscape */ $productListItemViewModel->getProductPriceHtml($product) ?>
+            </div>
+        </a>
+        <div class="compare-buttons flex flex-wrap">
+            <div class="qty_fields flex items-center justify-center justify-between w-full compareBtn"> 
+            <?php if ($showAddToCompare): ?>
+            
+            <label class="hidden" for="compare_checkbox_<?= (int)$productId ?>">compare</label>            
+            <input type="checkbox" class="compare_checkbox eeee" 
+            id="compare_checkbox_<?= (int)$productId ?>"  
+            value="<?= (int)$productId ?>" 
+             @click="(!$event.target.checked) ? removeFromCompareList(<?= $productId ?>) : addToCompareList(<?= (int)$productId ?>)"> 
+            <!-- @click="document.getElementById('add_to_compare_<?= (int)$productId ?>').click()"       -->
+             <?php
+                $compareArray=[];
+             ?>
+       
+            <button x-data="initCompareOnProductList()"
+                    @click.prevent="document.getElementById('compare_checkbox_<?= (int)$productId ?>').click()"
+                    aria-label="<?= $escaper->escapeHtmlAttr(__('Add to Compare')) ?>"
+                    type="button"
+                    class="inline-flex shrink-0 items-center justify-center compare-btn"
+                    id="add_to_compare_<?= (int)$productId ?>">
+                <?php //echo $heroicons->scaleHtml("w-5 h-5", 25, 25) ?>
+                <label for="compare1">Compare</label>
+            </button>
+            <?php endif; ?>
+        </div>
+        
+    <?php if ($sampleblock->getsampleproductsku($productId)) {?>        
+        <div class="orderSampleContent" x-cloak x-data="{showModal: false, htmlContent: '',pid: <?=$productId?>}">
+            <button class="order_btn text-size14 font-medium text-black" type="button" x-on:click="showModal = true,fetchHtmlContent(pid), document.body.classList.add('order_active');"><?= $escaper->escapeHtml(__('Order Free Sample')) ?></button>
+            <div class="modal order-free-sample-popup" x-show="showModal">
+                <div class="modal-overlay" x-on:click="showModal = false"></div>
+                <button class="closemodal" type="button" x-on:click="showModal = false, document.body.classList.remove('order_active');">Close X</button>
+                <div class="modal-content">    
+                    <div x-html="htmlContent" class="htmlcontent<?=$productId?>"></div>
+                </div>
+            </div>
+        </div>
+    <?php }?>
+            <?php /*if ($addToBlock = $block->getChildBlock('addto')): ?>
+                <?= $addToBlock->setProduct($product)->getChildHtml() ?>
+            <?php endif;*/ ?>
+        </div>
+    </div>
+</div>
+<?php if ($product->isSaleable()): ?>
+
+</form>
+<?php else: ?>
+</div>
+<?php endif; ?>

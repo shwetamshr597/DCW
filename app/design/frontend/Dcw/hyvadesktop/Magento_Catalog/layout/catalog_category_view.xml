@@ -1,0 +1,37 @@
+<?xml version="1.0"?>
+<!--
+/**
+ * Copyright © Magento, Inc. All rights reserved.
+ * See COPYING.txt for license details.
+ */
+-->
+<page xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" layout="2columns-left" xsi:noNamespaceSchemaLocation="urn:magento:framework:View/Layout/etc/page_configuration.xsd">
+    <body>
+    <referenceContainer name="columns.top">
+            <container name="category.view.container" htmlTag="div" htmlClass="category-view" after="-">
+                <block class="Magento\Catalog\Block\Category\View" name="category.image" template="Magento_Catalog::category/image.phtml">
+                    <arguments>
+                        <argument name="image" xsi:type="object">Magento\Catalog\ViewModel\Category\Image</argument>
+                        <argument name="output" xsi:type="object">Magento\Catalog\ViewModel\Category\Output</argument>
+                    </arguments>
+                </block>
+                <block class="Magento\Catalog\Block\Category\View" name="category.description" template="Magento_Catalog::category/description.phtml"/>
+                <block class="Magento\Catalog\Block\Category\View" name="category.description.after" template="Magento_Catalog::category/description_after.phtml"/>
+                <block class="Magento\Catalog\Block\Category\View" name="category.cms" template="Magento_Catalog::category/cms.phtml"/>
+            </container>
+        </referenceContainer>
+		<referenceContainer name="content">
+            <block class="Magento\Catalog\Block\Category\View" name="category.top.spotlight" after="mst_category_search" template="Magento_Catalog::category/spotlight.phtml"/>
+            <block class="Magento\Catalog\Block\Category\View" name="category.top.filter" after="category.top.spotlight" template="Magento_Catalog::category/top_filter.phtml"/>
+        </referenceContainer>
+         <referenceContainer name="sidebar.additional">
+            <!-- <block class="Magento\Framework\View\Element\Template" name="ajax.message.placeholder" template="Magento_Theme::html/messages.phtml"/>
+            <block class="Magento\Framework\View\Element\Messages" name="messages" as="messages" template="Magento_Theme::messages.phtml"/> -->
+            <block
+                name="catalog.compare.sidebar"
+                template="Magento_Catalog::product/compare/sidebar.phtml" 
+                ifconfig="catalog/frontend/show_sidebar_in_list"
+            />            
+        </referenceContainer>
+    </body>
+</page>

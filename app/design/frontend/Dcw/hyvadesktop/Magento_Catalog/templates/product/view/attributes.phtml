@@ -1,0 +1,220 @@
+<?php
+/**
+ * Hyvä Themes - https://hyva.io
+ * Copyright © Hyvä Themes 2020-present. All rights reserved.
+ * This product is licensed per Magento install
+ * See https://hyva.io/license
+ */
+
+declare(strict_types=1);
+
+use Magento\Framework\Escaper;
+use Magento\Catalog\Helper\Output as CatalogOutputHelper;
+use Magento\Catalog\Block\Product\View\Attributes;
+use Magento\Catalog\Model\Product;
+
+// phpcs:disable Magento2.Templates.ThisInTemplate.FoundHelper
+
+/** @var Escaper $escaper */
+/** @var CatalogOutputHelper $output */
+/** @var Attributes $block */
+
+
+/** @var CatalogOutputHelper $catalogOutputHelper */
+$catalogOutputHelper = $this->helper(CatalogOutputHelper::class);
+
+/** @var Product $product */
+$product = $block->getProduct();
+?>
+
+
+
+<?php 
+$sizeAttribute='approximate_tile_size,product_thickness,wear_layer_thickness,product_length,product_width';
+$showindecAtt='min_tile_quantity,antimicrobial,application_location,cases_per_pallet,color_family,color_finish,commercial_residential,edge_type,features_text,flooring_look,flooring_product_type,gloss,indoor_outdoor,installation_method,installs_over_subfloor,location,material';
+$tabshowattributes='description,shipping_and_returns,installation,maintenance,warranty';
+$tabshowattributesArray=explode(',',$tabshowattributes);
+$sizeAttributeAttArray=explode(',',$sizeAttribute);
+$showindecAttArray=explode(',',$showindecAtt);
+$attributes = $product->getAttributes();
+$decOtherAttHtml='<ul>';
+$sizeAttributeHtml='<ul>';
+$sizechild=0;
+$deschildv=0;
+foreach($attributes as $attribute){
+	if (in_array($attribute->getAttributeCode(), $sizeAttributeAttArray) && $attribute->getFrontend()->getValue($product)){
+	$sizechild=1;
+	$sizeAttributeHtml.='<li>';
+	$sizeAttributeHtml.='<label>'.$attribute->getStoreLabel().'</label>';
+	$sizeAttributeHtml.='<span>'.$attribute->getFrontend()->getValue($product).'</span>';
+	$sizeAttributeHtml.='</li>';
+	}
+  if (in_array($attribute->getAttributeCode(), $showindecAttArray) && $attribute->getFrontend()->getValue($product)){
+  $deschildv=1;
+  $decOtherAttHtml.='<li>';
+  $decOtherAttHtml.='<label>'.$attribute->getStoreLabel().'</label>';
+  $decOtherAttHtml.='<span>'.$attribute->getFrontend()->getValue($product).'</span>';
+  $decOtherAttHtml.='</li>';
+  }
+}
+
+	$decOtherAttHtml.='</ul>';
+  $sizeAttributeHtml.='</ul>';
+
+  $showindecAttArray=array_merge($showindecAttArray,$sizeAttributeAttArray)
+
+?>
+
+<?php  $attributes = $block->getAdditionalData();  //print_r($attributes);?>
+ <?php $description=$catalogOutputHelper->productAttribute($product, $product->getDescription(), 'description'); ?>
+
+<?php 
+
+$selectedtab='';
+if($description || $deschildv || $sizechild){
+  $selectedtab='description';
+}else{
+  foreach ($attributes as $attribute){
+    if (in_array($attribute['code'], $tabshowattributesArray)){
+      if($catalogOutputHelper->productAttribute($product, $attribute['value'], $attribute['code'])){
+        $selectedtab=$attribute['code']; 
+        break;
+      }
+    }
+  }	
+	
+}
+?>
+
+<?php if($selectedtab):?>
+<div class="spec_gap" id="specifications"></div>
+<div class="productinfotab">
+
+<div x-data="{ activeTab: '<?=$selectedtab?>' }">
+
+  <ul class="tab-sec flex tab-border mb-7">
+  <?php if($description || $deschildv || $sizechild):?>
+  <li class="-mb-px mr-1">
+      <a data-attribute_code="description" class="description_tab" :class="{ 'active': activeTab === 'description' }" href="#" @click.prevent="activeTab = 'description'">
+       <?= $escaper->escapeHtml('Details & Specifications') ?>
+      </a>
+    </li>
+  <?php endif;?>
+  <?php  if ($attributes): ?>
+    <?php foreach ($attributes as $attribute): ?>
+      <?php if (in_array($attribute['code'], $tabshowattributesArray)):?>
+        <?php  if($catalogOutputHelper->productAttribute($product, $attribute['value'], $attribute['code'])):?>
+          <li class="mr-1">
+            <a data-attribute_code="<?=$attribute['code']?>" class="<?=$attribute['code']?>_tab" :class="{ 'active': activeTab === '<?=$attribute['code']?>' }"
+             href="#" @click.prevent="activeTab = '<?=$attribute['code']?>'">
+             <?= $escaper->escapeHtml($attribute['label']) ?>
+            </a>
+          </li>
+      	<?php endif;?>
+      <?php endif;?>
+  	<?php endforeach;?>
+	<?php endif;?>
+  
+  </ul>
+  
+  <?php if($description || $deschildv || $sizechild):?>
+   <div x-show="activeTab === 'description'">
+     <?= /* @noEscape */
+                     $catalogOutputHelper->productAttribute($product, $product->getDescription(), 'description') ?>
+  <?php if ($sizechild):?>
+  <div class="productdetailsatt productsizeattribute mb-6">
+    <h3 class="text-size18 font-semibold mb-4">Dimensions</h3>
+    <?= /* @noEscape */$sizeAttributeHtml?>
+  </div> 
+<?php endif;?>
+<?php if ($deschildv):?>
+  <div class="productdetailsatt mb-12">
+    <h3 class="text-size18 font-semibold mb-4">Details</h3>
+    <?=/* @noEscape */$decOtherAttHtml?>
+  </div> 
+<?php endif;?>
+  
+  </div>
+  <?php endif;?>
+  
+<?php  if ($attributes): ?>
+<?php foreach ($attributes as $attribute): ?>
+  <?php if (in_array($attribute['code'], $tabshowattributesArray)):?>
+    <?php  if($catalogOutputHelper->productAttribute($product, $attribute['value'], $attribute['code'])):?>
+    <div x-show="activeTab === '<?=$attribute['code']?>'">
+      <?= /* @noEscape */
+                       $catalogOutputHelper->productAttribute($product, $attribute['value'], $attribute['code']) ?>
+    </div>
+    <?php endif;?>
+  <?php endif;?>
+<?php endforeach;?>
+<?php endif;?>
+  
+</div>
+
+</div>
+<?php endif;?>
+
+<?php
+/*echo $this->getLayout()
+->createBlock('Magento\Cms\Block\Block')
+->setBlockId('videos-features-pdp')
+->toHtml();*/
+?>
+<?php $pdpBottomVideo=$catalogOutputHelper->productAttribute($product, $product->getPdpBottomVideo(), 'description'); ?>
+<?php if($pdpBottomVideo):?>
+  <div class="buttomvideos mt-10">
+    <h2 class="font-semibold mb-4">Videos</h2>
+  <?= /* @noEscape */ $pdpBottomVideo ?>
+</div>
+<?php endif;?>
+
+<?php $pdpBottomFeatures=$catalogOutputHelper->productAttribute($product, $product->getPdpBottomFeatures(), 'description'); ?>
+<?php if($pdpBottomFeatures):?>
+   <div class="buttomfeatures relative">
+    <div class="spec_gap" id="pdp-features"></div>
+    <h2 class="font-semibold mb-4 mt-22">Features</h2>
+  <?= /* @noEscape */ $pdpBottomFeatures ?>
+</div>
+<?php endif;?>
+
+
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    // Select all <a> elements on the page
+    var links = document.querySelectorAll('a');
+
+    // Attach click event listener to each link
+    links.forEach(function(link) {
+      link.addEventListener('click', function(event) {
+        // Make sure the link has a hash value
+        if (this.hash !== '') {
+          event.preventDefault();
+
+          // Get the target element based on the hash value
+          var target = document.querySelector(this.hash);
+
+          // Scroll to the target element smoothly
+          target.scrollIntoView({
+            behavior: 'smooth'
+          });
+        }
+      });
+    });
+  });
+</script>
+<style>
+  .spec_gap{
+      position: absolute;
+      left: 0;
+      width: 1px;
+      height: 322px;
+      top: -322px;
+      z-index: -1;
+  }
+  @media(max-width:991px){
+    .spec_gap{
+      display: none;
+    }
+  }
+</style>

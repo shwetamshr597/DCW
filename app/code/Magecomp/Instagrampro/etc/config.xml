@@ -1,0 +1,17 @@
+<?xml version="1.0"?>
+<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:module:Magento_Store:etc/config.xsd">
+	<default>
+		<instagrampro>
+			<module_options>
+				<users>self</users>
+			</module_options>
+			<productgroup>
+				<proddetailtitle>Instagram Feed</proddetailtitle>
+			</productgroup>
+			<gallerygroup>
+				<galarytitle>Instagram Feed</galarytitle>
+				<seorurl>instagramfeed</seorurl>
+			</gallerygroup>
+		</instagrampro>
+	</default>
+</config>

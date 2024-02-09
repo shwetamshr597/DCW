@@ -1,0 +1,492 @@
+<?php
+/**
+ * Hyvä Themes - https://hyva.io
+ * Copyright © Hyvä Themes 2020-present. All rights reserved.
+ * This product is licensed per Magento install
+ * See https://hyva.io/license
+ */
+
+declare(strict_types=1);
+
+use Hyva\Theme\Model\ViewModelRegistry;
+use Hyva\Theme\ViewModel\ProductStockItem;
+use Magento\Catalog\Block\Product\View;
+use Magento\Catalog\Model\Product;
+use Magento\Framework\Escaper;
+
+// phpcs:disable Generic.WhiteSpace.ScopeIndent.Incorrect
+
+/** @var View $block */
+/** @var Escaper $escaper */
+/** @var ViewModelRegistry $viewModels */
+
+/** @var Product $product */
+$product = $block->getProduct();
+
+/** @var ProductStockItem $stockItemViewModel */
+$stockItemViewModel = $viewModels->require(ProductStockItem::class);
+$minSalesQty        = $stockItemViewModel->getMinSaleQty($product);
+$maxSalesQty        = $stockItemViewModel->getMaxSaleQty($product);
+
+$maxSalesQtyLength  = ($maxSalesQty ? strlen((string) $maxSalesQty) : 4)
+    + (/* add one if decimal for separator */
+    (int) $stockItemViewModel->isQtyDecimal($product));
+
+$step = $stockItemViewModel->getQtyIncrements($product)
+    ? $stockItemViewModel->getQtyIncrements($product)
+    : null;
+
+$roll_width_ft = ceil((float)$product->getRollWidth()/12);
+$min_rollcut_ft = ceil((float)$product->getMinRollcut()/12);
+$max_roll_length_ft = '';
+if ($product->getMaxRollLengthRestriction() > 0) {
+    $max_roll_length_ft = ceil((float)$product->getMaxRollLengthRestriction()/12);
+}
+
+$flooringCalculationBlock = $block->getLayout()->createBlock(\Dcw\FlooringCalculation\Block\Index::class);
+$flooringCalculationHelper = $flooringCalculationBlock->flooringCalculationHelper();
+?>
+<?php if ($block->shouldRenderQuantity()): ?>
+    <script>
+        var is_cart_configure_pdp_global = '<?= /* @noEscape */ $flooringCalculationHelper->isCartConfigurePdp()?>';
+        //console.log('is_cart_configure_pdp_global='+is_cart_configure_pdp_global);
+        function initQtyField() {
+
+            function findPathParam(key) {
+                // get all path pairs after BASE_URL/front_name/action_path/action
+                const baseUrl = (BASE_URL.substr(0, 2) === '//' ? 'http:' : '') + BASE_URL;
+                const baseUrlParts = (new URL(baseUrl)).pathname.replace(/\/$/, '').split('/');
+                const pathParts = window.location.pathname.split('/').slice(baseUrlParts.length + 3);
+                for (let i = 0; i < pathParts.length; i += 2) {
+                    if (pathParts[i] === key && pathParts.length > i) {
+                        return pathParts[i + 1];
+                    }
+                }
+            }
+
+            return {
+                qty: <?= $block->getProductDefaultQty() * 1 ?>,
+                itemId: (new URLSearchParams(window.location.search)).get('id') || findPathParam('id'),
+                productId: '<?= (int)$product->getId() ?>',
+                <?php // populate the qty when editing a product from the cart ?>
+                onGetCartData: function onGetCartData(data, $dispatch) {
+                    const cart = data && data.data && data.data.cart;
+                    const quotecart = data && data.data && data.data.quotecart; 
+                    if (this.itemId && cart && cart.items || this.itemId && quotecart && quotecart.items) {
+                        const cartItem = cart.items.find((item) => {
+                            return item.item_id === this.itemId && item.product_id === this.productId;
+                        });
+                        const quotecartItem = quotecart.items.find((item) => {
+                            return item.item_id === this.itemId && item.product_id === this.productId;
+                        });
+                        if (cartItem && cartItem.qty) { 
+                            this.qty = cartItem.qty;
+                            this.roll_quantity = cartItem.qty;
+                            this.total_roll_quantity = cartItem.qty;
+                        } else  {  
+                            this.qty = quotecartItem.qty;
+                            this.roll_quantity = quotecartItem.qty;
+                            this.total_roll_quantity = quotecartItem.qty;   
+                        }
+                        this.total_sqft = parseFloat(this.roll_quantity)*
+                        (parseFloat(this.roll_width)*parseFloat(this.roll_length));
+                        
+                        this.total_price = hyva.formatPrice(
+                                                            parseFloat(this.total_sqft)*
+                                                            parseFloat(this.final_price)
+                                                            );
+                        this.total_regular_price = hyva.formatPrice(
+                                                                    parseFloat(this.total_sqft)*
+                                                                    parseFloat(this.regular_price)
+                                                                    );
+                                                                    
+                                                                    
+                        var custompice =  this.total_price.replace('$','');			
+                        document.getElementById('pdp_hide_price').value = custompice;
+
+                        $dispatch('update-qty-' + this.productId, this.qty);
+                        
+                    }
+                }
+            };
+        }
+        
+        
+        function flooringCalcDetails() {
+                return {
+                    room_width:'',
+                    room_length:'',
+                    recommended_roll_quantity1:'0',
+                    recommended_roll_length1:'<?= /* @noEscape */ $min_rollcut_ft?>',
+                    recommended_roll_quantity2: '0',
+                    recommended_roll_length2:'<?= /* @noEscape */ $min_rollcut_ft?>',
+                    roll_length_group:1,
+                    roll_quantity: 1,
+                    roll_width:'<?= /* @noEscape */ $roll_width_ft?>',
+                    min_rollcut:'<?= /* @noEscape */ $min_rollcut_ft?>',
+                    roll_length:'<?= /* @noEscape */ $min_rollcut_ft?>',
+                    max_roll_length:'<?= /* @noEscape */ $max_roll_length_ft?>',
+                    final_price: initPrice<?= /* @noEscape */ (int)$product->getId() ?>().getFinalPrice(),
+                    regular_price: initPrice<?= /* @noEscape */ (int)$product->getId() ?>().getRegularPrice(),
+                    total_price:hyva.formatPrice(parseFloat(0).toFixed(2)),
+                    total_regular_price:hyva.formatPrice(parseFloat(0).toFixed(2)),
+                    total_sqft:0,
+                    total_roll_quantity:0,
+                    showPriceSummary: false,
+                    <?php if (!empty($flooringCalculationHelper->isCartConfigurePdp())) {?>
+                        rollTab:'custom_roll_length',
+                    <?php } else {?>
+                        rollTab:'recommended_roll_length',
+                    <?php } ?>
+                    err_message: '',
+                    is_cart_configure_pdp:'<?= /* @noEscape */ $flooringCalculationHelper->isCartConfigurePdp()?>',
+                    roomWidthKeyup: function () {
+                        var regexp = /^\d*\.?\d*$/;     ///^\d+(\.\d{1,2})?$/;
+                        var isValidated = regexp.test(this.room_width);
+                       
+                        if (isValidated && this.room_width != '') {
+                            this.recommended_roll_quantity1 = Math.ceil(parseFloat(this.room_width) /
+                                                                        parseFloat(this.roll_width));
+                            
+                            this.recommended_roll_length2 =
+                            (parseFloat(this.room_width) > parseFloat(this.min_rollcut))?
+                            this.room_width:this.min_rollcut;
+                            
+                            this.recommended_roll_length2 = Math.ceil(parseFloat(this.recommended_roll_length2));
+                            
+                            this.updateRollQtyLength();
+                        } else {
+                            this.room_width = '';
+                            this.recommended_roll_quantity1 = 0;
+                            this.recommended_roll_length2 = this.min_rollcut;
+                            this.updateRollQtyLength();
+                        }
+                    },
+                    roomLengthKeyup: function () {
+                        var regexp = /^\d*\.?\d*$/; 
+                        var isValidated = regexp.test(this.room_length);
+                       
+                        if (isValidated && this.room_length != '') {
+                            this.recommended_roll_quantity2 =
+                            Math.ceil(parseFloat(this.room_length) / parseFloat(this.roll_width));
+                            
+                            this.recommended_roll_length1 =
+                            (parseFloat(this.room_length) > parseFloat(this.min_rollcut))?
+                            this.room_length:this.min_rollcut;
+                            
+                            this.recommended_roll_length1 = Math.ceil(parseFloat(this.recommended_roll_length1));
+                            
+                            this.updateRollQtyLength();
+                        } else {
+                            this.room_length = '';
+                            this.recommended_roll_quantity2 = 0;
+                            this.recommended_roll_length1 = this.min_rollcut;
+                            this.updateRollQtyLength();
+                        }
+                    },
+                    qtyUpdate:  function () {
+                        if (parseFloat(this.roll_quantity) < 1 || this.roll_quantity == '') {
+                           this.roll_quantity = 1
+                        }
+                        this.calcTotalSqftPrice();
+                    },
+                    rollLengthUpdate:  function () {
+                        var regexp = /^\d*\.?\d*$/; 
+                        var isValidated = regexp.test(this.roll_length);
+                        if (parseFloat(this.roll_length) < parseFloat(this.min_rollcut) 
+                        ||this.roll_length == '' || !isValidated) {
+                            this.roll_length = this.min_rollcut;
+                        }
+						
+                        this.roll_length = Math.round(this.roll_length); //== As per live site
+						
+						if (this.max_roll_length!="") {
+							if (this.roll_length > this.max_roll_length) {
+									document.getElementById("err-msg").innerHTML = "You can't order more than "+this.max_roll_length+" linear feet.";
+									document.getElementById("product-addtocart-button-fake").setAttribute("disabled", "disabled");
+							 } else { 
+									document.getElementById("err-msg").innerHTML = "";
+									document.getElementById("product-addtocart-button-fake").removeAttribute("disabled");
+							 }
+                        }
+						
+                        this.calcTotalSqftPrice();
+                    },
+                    updateTotalQtySqftPriceOnPageLoad:  function () {
+                        <?php if (empty($flooringCalculationHelper->isCartConfigurePdp())) {?>
+                            <?php  if(!isset($_REQUEST['color'])) { ?>
+                        var CONTROL_INTERVAL = setInterval(function(){
+                            if(document.querySelector('.product-option-value-input')){
+                                document.querySelectorAll('.product-option-values').forEach(function(option_box) {
+                                    option_box.querySelector('.product-option-value-input').click();
+                                });
+                                clearInterval(CONTROL_INTERVAL);
+                            }
+                        }, 100);
+                        <?php }?>
+                        <?php }?>
+                    },
+                    updateRollQtyLength:   function () {
+                        if (this.roll_length_group == 1) {
+                            this.roll_quantity = this.recommended_roll_quantity1;
+                            this.roll_length = this.recommended_roll_length1;
+                        }else{
+                            this.roll_quantity = this.recommended_roll_quantity2;
+                            this.roll_length = this.recommended_roll_length2;
+                        }
+                        
+                        if (this.roll_quantity < 1 || this.roll_quantity == '') {
+                           this.roll_quantity = 1
+                        }
+                        if (this.roll_length <= this.min_rollcut || this.roll_length == '') {
+                           this.roll_length = this.min_rollcut;
+                        }
+                        this.calcTotalSqftPrice();
+                    },
+                    calcTotalSqftPrice:   function () {
+                        if (this.rollTab == 'custom_roll_length' ||
+                            (this.rollTab == 'recommended_roll_length' &&
+                             (this.room_width > 0 && this.roll_length_group == 1) ||
+                             (this.room_length > 0 && this.roll_length_group == 2))) {
+                            this.total_sqft = parseFloat(this.roll_quantity)*
+                            (parseFloat(this.roll_width)*parseFloat(this.roll_length));
+                            
+                            this.total_roll_quantity = this.roll_quantity;
+                            this.total_price = hyva.formatPrice(
+                                                                parseFloat(this.total_sqft)*
+                                                                parseFloat(this.final_price)
+                                                                );
+                            this.total_regular_price = hyva.formatPrice(
+                                                                        parseFloat(this.total_sqft)*
+                                                                        parseFloat(this.regular_price)
+                                                                        );
+                        }else{
+                            this.total_sqft = 0;
+                            this.total_roll_quantity = 0;
+                            this.total_price = hyva.formatPrice(parseFloat(0));
+                            this.total_regular_price = hyva.formatPrice(parseFloat(0));
+                        }
+                        
+						if(this.room_width >0){
+							document.getElementById('room-width').value = this.room_width;
+						}
+						
+						if(this.room_length >0){
+							document.getElementById('room-length').value = this.room_length;
+						}
+						
+						if(this.rollTab!=""){
+							if(this.rollTab == 'recommended_roll_length'){
+								document.getElementById('role-type').value = 'Recommended Roll Length';
+							} else {
+								document.getElementById('role-type').value = 'Custom Roll Length';
+							}
+						}
+						if(this.final_price > 0){
+							document.getElementById('price-per-sqft').value = "$"+this.final_price+" /sqft";
+						}
+						
+						var rollsizes = this.total_roll_quantity+" roll(s) "+this.room_width+"′ × "+this.roll_length+" ′ ea.";
+						document.getElementById('roll-size').value = rollsizes;
+									
+						var custompice =  this.total_price.replace('$','');			
+						document.getElementById('pdp_hide_price').value = custompice;
+                    },
+                    addToCartClickVerify:   function () {
+                        this.err_message = "";
+                        var can_add_to_cart = 1;
+                        if (this.rollTab == 'recommended_roll_length' && (this.room_width<=0 || this.room_length<=0)) {
+                            
+                            can_add_to_cart = 0;
+                        }
+                        if (this.max_roll_length!="") {
+                            if (this.roll_length > this.max_roll_length) {
+                                 can_add_to_cart = 0;
+								 document.getElementById("err-msg").innerHTML = "You can't order more than "+this.max_roll_length+" linear feet.";
+							 } else { 
+									document.getElementById("err-msg").innerHTML = "";
+							 }
+                        }
+                        if (can_add_to_cart == 1) {
+							var cscustompice =  this.total_price.replace('$','');
+							cscustompice = parseFloat(cscustompice.replace(/,/g, ''));
+							cscustompice = cscustompice / this.roll_quantity;						
+							document.getElementById('pdp-p-data').value = cscustompice;
+                            document.getElementById('product-addtocart-button').click();
+                           
+                            if (document.querySelector('.related-product-dialog-wrapper')) {
+                                window.addEventListener('reload-customer-section-data', event =>{
+                                    window.dispatchEvent(
+                                        new CustomEvent('hyva-modal-show', {detail: {dialog: 'related-product-slider-dialog'}})
+                                    );
+                                });
+                            }
+                        }
+                        
+                    }
+                }
+        }
+
+        document.querySelector('#product_addtocart_form').addEventListener("click", function(){
+            is_cart_configure_pdp_global = 0;
+            //console.log('is_cart_configure_pdp_global click='+is_cart_configure_pdp_global);
+        }); 
+                
+    </script>
+    
+    <div class="err_message" id ="err-msg" style="color:red;"> </div>
+    <div class="roll_length_tab_wrapper bg-white w-full" 
+    x-show="(roll_width > 0 && roll_width !='') && (min_rollcut > 0 && min_rollcut !='')">
+        <!-- The tabs navigation -->
+        <div class="roll_length_tab_heading flex items-center">
+          <a class="w-1/2" :class="{ 'active': rollTab === 'recommended_roll_length' }"
+            @click.prevent="rollTab = 'recommended_roll_length'; updateRollQtyLength();" href="#">
+            Recommended Roll Length
+          </a>
+          <a class="w-1/2" :class="{ 'active': rollTab === 'custom_roll_length' }"
+            @click.prevent="rollTab = 'custom_roll_length'; updateRollQtyLength();" href="#">Custom Roll Length</a>
+        </div>
+        <div  class="roll_length_tab_content tab1" x-show="rollTab === 'recommended_roll_length'">
+            <div class="room-size-input flex items-center text-center justify-center w-full">
+                <div class="field room_width">
+                    <label class="label text-size14 font-medium text-black" for="room_width">
+                        <span class="text-size14 font-medium text-black">Room Width (ft)</span>
+                    </label>
+                    <input name="room_width" id="room_width" value="" type="text" placeholder="0"
+                    x-model="room_width" x-on:keyup="roomWidthKeyup"
+                    autocomplete="off" class="form-text  text-size14 font-normal text-black" />
+                </div>
+                <span class="cross-mark text-size14 font-normal text-black">×</span>
+                <div class="field room_length">
+                    <label class="label text-size14 font-medium text-black" for="room_length">
+                        <span class="text-size14 font-medium text-black">Room Length (ft)</span>
+                    </label>
+                    <input name="room_length" id="room_length" value="" type="text" placeholder="0"
+                    x-model="room_length" x-on:keyup="roomLengthKeyup"
+                    autocomplete="off" class="form-text text-size14 font-normal text-black" />
+                </div>
+            </div>
+            <div class="roll-cut-info text-size14 font-normal text-center text-lightgray1">
+                Rolls are cut to <span x-text="min_rollcut"></span> ft minimum</div>
+            <div class="recommended-options-container flex items-center text-center justify-between"
+                x-show="room_width > 0 && room_length > 0">
+                <div class="recommended-options-container-in">
+                    <input id="recommended-option1" type="radio" name="roll_length_group"
+                    x-on:change="updateRollQtyLength()" x-model="roll_length_group" value="1" class="hidden" />
+                    <label class="recommended-option1" for="recommended-option1">
+                        <span class="text-size14 font-semibold text-black">Option 1</span>
+                        <div class="option1-info text-size14 font-normal text-black">
+                            <span x-text="recommended_roll_quantity1"></span> roll
+                            <span x-text="roll_width"></span>′ ×
+                            <span x-text="recommended_roll_length1"></span>′ ea.
+                        </div>
+                        <img src="<?= /* @noEscape */ $block
+                        ->getViewFileUrl('Dcw_FlooringCalculation::images/option1_arrow.png'); ?>"/>
+                    </label>
+                </div>
+                <div class="recommended-options-container-in">
+                    <input id="recommended-option2" type="radio" name="roll_length_group"
+                    x-on:change="updateRollQtyLength()" x-model="roll_length_group" value="2" class="hidden" />
+                    <label class="recommended-option2" for="recommended-option2">
+                        <span class="text-size14 font-semibold text-black">Option 2</span>
+                        <div class="option2-info text-size14 font-normal text-black">
+                            <span x-text="recommended_roll_quantity2"></span> roll
+                            <span x-text="roll_width"></span>′ ×
+                            <span x-text="recommended_roll_length2"></span>′ ea.
+                        </div>
+                        <img src="<?= /* @noEscape */ $block
+                        ->getViewFileUrl('Dcw_FlooringCalculation::images/option2_arrow.png'); ?>"/>
+                    </label>
+                </div>
+            </div>
+        </div>
+        <div class="roll_length_tab_content tab2" x-show="rollTab === 'custom_roll_length'">
+            <div class="cutom_roll">
+                <div class="field roll_width w-full flex items-center">
+                    <label class="label text-size14 font-medium text-black" for="roll_width">
+                        <span>Roll Width:</span>
+                    </label>
+                    <input name="roll_width" id="roll_width"
+                    class="form-text text-size14 font-medium text-black"
+                    value="" type="text" x-model="roll_width" readonly>
+                    <span class="text-size14 font-medium text-black">Feet</span>
+                </div>
+                <div class="field roll_length w-full flex items-center">
+                    <label class="label text-size14 font-medium text-black" for="roll_length">
+                        <span>Roll Length:</span>
+                    </label>
+                    <input name="roll_length" id="roll_length" value=""
+                    class="form-text text-size14 font-medium text-black"
+                    type="text" x-on:change="rollLengthUpdate" x-model="roll_length"/>
+                    <span class="text-size14 font-medium text-black">
+                        Feet (min
+                        <span class="form-text text-size14 font-medium text-black" x-text="min_rollcut"></span>)
+                    </span>
+                </div>
+            </div>
+            <div x-data="initQtyField()" class="roll_qty">
+                <?php if ($product->isSaleable()): ?>
+                    <div class="w-full flex items-center">
+                        <label for="qty[<?= (int)$product->getId() ?>]"
+                            class="label text-size14 font-medium text-black"
+                        >
+                            <?= $escaper->escapeHtml(__('Quantity')) ?>
+                        </label>
+                        <input name="qty"
+                            @private-content-loaded.window="onGetCartData($event.detail, $dispatch)"
+                            id="qty[<?= (int)$product->getId() ?>]"
+                            form="product_addtocart_form"
+                            <?php if ($stockItemViewModel->isQtyDecimal($product)): ?>
+                            type="text"
+                            pattern="[0-9](\.[0-9])?{0,<?= /** @noEscape */ $maxSalesQtyLength ?>}'"
+                            inputmode="decimal"
+                            <?php else: ?>
+                            type="text"
+                            pattern="[0-9]{0,<?= /** @noEscape */ $maxSalesQtyLength ?>}"
+                            inputmode="numeric"
+                            <?php if ($minSalesQty): ?>min="<?= /** @noEscape */ $minSalesQty ?>"<?php endif; ?>
+                            <?php if ($maxSalesQty): ?>max="<?= /** @noEscape */ $maxSalesQty ?>"<?php endif; ?>
+                            <?php if ($step): ?>step="<?= /** @noEscape */ $step ?>"<?php endif; ?>
+                            <?php endif; ?>
+                            :value="qty"
+                            class="form-input text-size14 font-medium text-black invalid:ring-2 invalid:ring-red-500"
+                            x-model.number="roll_quantity"
+                            x-on:change="qtyUpdate"
+                            @change="$dispatch('update-qty-<?= (int)$product->getId() ?>', qty)"
+                        />
+                        <span class="text-size14 font-medium text-black">Roll(s)</span>
+                    </div>
+                <?php endif; ?>
+            </div>
+        </div>
+    </div>
+    
+    <div class="price-summary-container no_bg flex justify-between bg-white rounded-md relative items-baseline"
+        x-show="showPriceSummary == 1 && (roll_width > 0 && roll_width !='') && (min_rollcut > 0 && min_rollcut !='')">
+        <div class="left">
+            <div class="total-roll-quantity-length total-case">
+                <span x-text="total_roll_quantity" class="inter text-size28 font-medium text-black mr-1"></span>
+                <span class="inter text-size16 font-normal text-black">roll(s)</span>
+                <span x-text="roll_width" class="inter text-size16 font-normal text-black">
+                </span><span class="inter text-size16 font-normal text-black">′ × </span>
+                <span x-text="roll_length" class="inter text-size16 font-normal text-black">
+                </span><span class="inter text-size16 font-normal text-black">′ ea.</span>
+            </div>
+        </div>
+        <div class="right your_price flex">
+            <div class="inter text-size16 font-medium text-black price_left">Your price</div>
+            <div class="total-price-info ml-6">
+                <div class="total-regular-price inter line-through text-size14 font-normal text-custom-blue"
+                     x-show="total_price!=total_regular_price" x-text="total_regular_price"></div>
+                <div class="total-price inter text-size21 font-bold text-custom-blue" x-text="total_price" id ="pdp-price"></div>
+            </div>
+        </div>
+    </div>
+    
+<?php endif; ?>
+
+<style type="text/css">
+    .catalog-product-view .product-info-main .price-summary-container.no_bg:before{
+        display: none;
+    }
+</style>

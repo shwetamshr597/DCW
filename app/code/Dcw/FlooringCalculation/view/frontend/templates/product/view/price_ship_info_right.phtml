@@ -1,0 +1,30 @@
+<div class="saving_price_info w-1/2 bg-custom-blue py-2 pl-2 pr-5">
+    <h3  x-show="getPercentageDiscount() > 0" class="inter text-size14 font-medium text-custom-white mb-1">Your Savings</h3>
+    <table class="saving_ship_info w-full">
+        <tr x-show="getPercentageDiscount() > 0">
+            <td class="w-1/2 inter text-size13 font-medium text-custom-white">MSRP</td>
+            <td class="w-1/2 inter text-size13 font-medium text-custom-white">
+                <span x-text="getFormattedRegularPrice()"></span>
+            </td>
+        </tr>
+        <tr x-show="getPercentageDiscount() > 0">
+            <td class="w-1/2 inter text-size13 font-medium text-custom-white">
+                Save <span x-text="getPercentageDiscount()"></span>%
+            </td>
+            <td class="w-1/2 inter text-size13 font-medium text-custom-white">
+                -<span x-text="getFormattedSaveMsrpPrice()"></span>
+            </td>
+        </tr>
+        <tr x-show="pdp_shipping_text != ''">
+            <td class="w-1/2 inter text-size13 font-medium text-custom-white">Shipping</td>
+            <td class="w-1/2 inter text-size13 font-medium text-custom-white">
+            <span x-text="pdp_shipping_text"></span>
+            </td>
+        </tr>
+        <tr x-show="expected_days_ship != ''">
+            <td colspan="2" class="w-full inter text-size13 font-medium text-custom-white">
+                <span class="ships" id ="s-ships" x-text="expected_days_ship"></span>
+            </td>
+        </tr>
+    </table>
+</div>

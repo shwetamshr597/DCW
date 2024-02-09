@@ -1,0 +1,363 @@
+<?php
+/**
+ * Hyvä Themes - https://hyva.io
+ * Copyright © Hyvä Themes 2020-present. All rights reserved.
+ * This product is licensed per Magento install
+ * See https://hyva.io/license
+ */
+
+declare(strict_types=1);
+
+use Hyva\Theme\Model\ViewModelRegistry;
+use Hyva\Theme\ViewModel\ProductAttributes;
+use Hyva\Theme\ViewModel\ProductCompare;
+use Hyva\Theme\ViewModel\ProductPage;
+use Hyva\Theme\ViewModel\Wishlist;
+use Magento\Catalog\Model\Product;
+use Magento\Framework\Escaper;
+use Magento\Framework\View\Element\Template;
+
+/** @var Template $block */
+/** @var Escaper $escaper */
+/** @var ViewModelRegistry $viewModels */
+/** @var ProductPage $productViewModel */
+/** @var \Hyva\Theme\ViewModel\Modal $modalViewModel */
+/** @var \Hyva\Theme\ViewModel\Slider $sliderViewModel */
+
+$productViewModel = $viewModels->require(ProductPage::class);
+/** @var ProductAttributes $attributesViewModel */
+$attributesViewModel = $viewModels->require(ProductAttributes::class);
+/** @var Product $product */
+$product = $productViewModel->getProduct();
+$final_price = $product->getPriceInfo()->getPrice('final_price')->getValue();
+$msrp = $product->getPriceInfo()->getPrice('regular_price')->getValue();
+$save_price = $msrp - $final_price;
+$percentage_discount = 0;
+if($save_price>0) {
+    $percentage_discount = round((float)number_format(($save_price*100)/$msrp, 2, ".", ""));
+}
+$sampleblock= $block->getLayout()->createBlock(\Dcw\SampleProduct\Block\SampleData::class);
+$outputHelper = $block->getData('outputHelper');
+$designerToolBlock= $block->getLayout()->createBlock(\Dcw\DesignerTool\Block\Index::class);
+$mediaUrl = $designerToolBlock->getMediaUrl();
+$brandLogoBlock= $block->getLayout()->createBlock(\Dcw\BrandLogo\Block\Index::class);
+$quickShipBlock= $block->getLayout()->createBlock(\Dcw\FlooringCalculation\Block\Quickship::class);
+?>
+<div class="my-0 mb-3 flex reviews">
+        <?= $block->getChildHtml('product.info.review') ?>
+        <?= $block->getChildHtml('bazaarvoice.reviews.summary.custom') ?>
+</div>
+<?php if ($brandLogoBlock->getBrandLogo($product->getId())) {?>
+    <div class="brand_logo_container">From <?= /* @noEscape */ $brandLogoBlock->getBrandLogo($product->getId()) ?></div>
+<?php }?>
+<div class="order-2 w-full md:w-7/12 lg:w-1/2 pl-6 product-main-content"
+x-data="flooringCalcDetails()" x-init="updateTotalQtySqftPriceOnPageLoad()">
+    <p class="hidden md:block text-size32 font-medium text-darkblack mb-1">
+        <strong class="text-size32 font-medium text-darkblack"><?= $escaper->escapeHtml($product->getName()) ?></strong>
+    </p>
+    <div class="my-0 mb-2 flex reviews">
+        <?= $block->getChildHtml('product.info.review') ?>
+    </div>
+    <div class="flex flex-col sm:flex-row justify-between">
+        <?php //echo $block->getChildHtml("product.info.stockstatus") ?>
+        <?= $block->getChildHtml("alert.urls") ?>
+    </div>
+    <?php /*<div id="product-details">
+        <?php foreach ($block->getAttributes() as $attributeConfig) {
+            $attribute = $attributesViewModel->getAttributeFromLayoutConfig($attributeConfig); ?>
+            <?php if ($value = $attribute['value'] ?? null) { ?>
+                <div class="flex border-t border-gray-300 py-2 last:mb-6 last:border-b
+                <?= $attribute['value'] ?: "" ?>">
+                    <span class="w-1/2 text-left text-gray-700 product-detail-label">
+                        <?= $escaper->escapeHtml($attribute['label']) ?>
+                    </span>
+                    <span class="w-1/2 ml-2 text-left text-gray-900 product-detail-value">
+                        <?= $escaper->escapeHtml($value) ?>
+                    </span>
+                </div>
+            <?php } ?>
+        <?php } ?>
+    </div>*/?>
+    <div class="price-details" <?= ($product->getTypeId()=='configurable')?
+    'x-data="initConfigurableSwatchOptions_'.(int) $product->getId().'()':''?>">
+        <?php
+        if ($product->getAttributeText('product_floor_type') == 'Wooden flooring' ||
+        $product->getAttributeText('product_floor_type') == 'Carpet Tiles') {
+            echo $block->getLayout()->createBlock(Magento\Catalog\Block\Product\View::class)
+            ->setTemplate('Dcw_FlooringCalculation::product/view/price_case.phtml')->toHtml();
+        } elseif ($product->getAttributeText('product_floor_type') == 'Rubber Rolls') {
+            echo $block->getLayout()->createBlock(Magento\Catalog\Block\Product\View::class)
+            ->setTemplate('Dcw_FlooringCalculation::product/view/price_linearfoot.phtml')->toHtml();
+        } elseif ($product->getAttributeText('product_floor_type') == 'Rubber Tiles' ||
+        $product->getAttributeText('product_floor_type') == 'Tier Pricing') {
+            echo $block->getLayout()->createBlock(Magento\Catalog\Block\Product\View::class)
+            ->setTemplate('Dcw_FlooringCalculation::product/view/price_tile.phtml')->toHtml();
+        } elseif ($product->getData('HasCornerBorderCenter') == 1) {
+            echo $block->getLayout()->createBlock(Magento\Catalog\Block\Product\View::class)
+            ->setTemplate('Dcw_FlooringCalculation::product/view/price_cbc.phtml')->toHtml();
+        } elseif ($product->getAttributeText('product_floor_type') == 'Trailer Rolls') {
+            echo $block->getLayout()->createBlock(Magento\Catalog\Block\Product\View::class)
+            ->setTemplate('Dcw_FlooringCalculation::product/view/price_traile_rolls.phtml')->toHtml();
+        }
+        ?>
+        <?php //echo $block->getChildHtml("product.info.price") ?>
+    </div>
+    <?php
+    if ($sampleblock->getsampleproductsku($product->getId())) {?>                     
+        <div class="order-free-sample-container mb-6" x-cloak
+        x-data="{showModal: false, htmlContent: '',pid: <?= /* @noEscape */ $product->getId()?>}">
+            <button type="button"
+            class="order-free-sample-link text-size16 font-semibold text-custom-blue underline relative"
+            x-on:click="showModal = true,fetchHtmlContent(pid)">
+                <?= $escaper->escapeHtml(__('Order Free Sample')) ?>
+            </button>
+            <div class="modal order-free-sample-popup z-50" x-show="showModal">
+                <div class="modal-overlay" x-on:click="showModal = false"></div>
+                <button class="closemodal" type="button" x-on:click="showModal = false">Close X</button>
+                <div class="modal-content">                    
+                    <div x-html="htmlContent" 
+                    class="htmlcontent<?= /* @noEscape */ $product->getId()?>"></div>           
+                </div>
+            </div>
+        
+         </div>
+        <?php
+    }
+    ?>
+    <?php /*if ($shortDescription = $productViewModel->getShortDescription(true,false)) { ?>
+        <div class="mb-6 leading-relaxed product-description prose">
+        <?= $shortDescription ?>
+        </div>
+    <?php } */?>
+    <div class="mb-6 leading-relaxed product-description prose" x-data="PdpFeatureData()" x-init="initPdpFeatureFunc()">
+        <ul class="pdp_feature_container" :class="{ 'pdp_feature_crossed': is_open == true}">
+            <?php
+            $pdp_feature_count = 0;
+            if (!empty($product->getPdpFeature1())) {
+                $pdp_feature_count++;
+                ?>
+                <li><?= /* @noEscape */ $product->getPdpFeature1();?></li>
+            <?php }?>
+            <?php if (!empty($product->getPdpFeature2())) {
+                $pdp_feature_count++;
+                ?>
+                <li><?= /* @noEscape */ $product->getPdpFeature2();?></li>
+            <?php }?>
+            <?php if (!empty($product->getPdpFeature3())) {
+                $pdp_feature_count++;
+                ?>
+                <li><?= /* @noEscape */ $product->getPdpFeature3();?></li>
+            <?php }?>
+            <?php if (!empty($product->getPdpFeature4())) {
+                $pdp_feature_count++;
+                ?>
+                <li><?= /* @noEscape */ $product->getPdpFeature4();?></li>
+            <?php }?>
+            <?php if (!empty($product->getPdpFeature5())) {
+                $pdp_feature_count++;
+                ?>
+                <li><?= /* @noEscape */ $product->getPdpFeature5();?></li>
+            <?php }?>
+            <?php if (!empty($product->getPdpFeature6())) {
+                $pdp_feature_count++;
+                ?>
+                <li><?= /* @noEscape */ $product->getPdpFeature6();?></li>
+            <?php }?>
+        </ul>
+        <?php
+        if ($pdp_feature_count > 3) {?>
+        <a class="underline text-center text-size14 font-medium text-black w-full"
+        x-on:click="is_open = 1" x-show="is_open == 0">View All</a>
+        <?php }?>
+    </div>
+    
+    <script>
+    function PdpFeatureData() {
+        return {
+            pdp_feature_count: 0,
+            is_open: 0,
+            initPdpFeatureFunc: function () {
+                this.pdp_feature_count = parseInt(<?= /* @noEscape */ $pdp_feature_count;?>);
+
+            }
+        }
+    }
+    </script>
+
+<?php if ((!empty($product->getPdpIcon1()) && $product->getPdpIcon1() != 'no_selection') ||
+(!empty($product->getPdpIcon2()) && $product->getPdpIcon2() != 'no_selection') ||
+(!empty($product->getPdpIcon3()) && $product->getPdpIcon3() != 'no_selection') ||
+(!empty($product->getPdpIcon4()) && $product->getPdpIcon4() != 'no_selection') ||
+(!empty($product->getPdpIcon5()) && $product->getPdpIcon5() != 'no_selection') ||
+(!empty($product->getPdpIcon6()) && $product->getPdpIcon6() != 'no_selection')) {?>
+<div class="pdp_icon_container">
+    <?php
+    if (!empty($product->getPdpIcon1()) && $product->getPdpIcon1() != 'no_selection') {
+        $pdp_icon_1 = $mediaUrl.'catalog/product'.$product->getResource()
+        ->getAttribute('pdp_icon_1')->getFrontend()->getValue($product);
+        ?>
+        <div class="">
+            <img src="<?= /* @noEscape */ $pdp_icon_1;?>"/>
+        </div>
+    <?php }?>
+    <?php
+    if (!empty($product->getPdpIcon2()) && $product->getPdpIcon2() != 'no_selection') {
+        $pdp_icon_2 = $mediaUrl.'catalog/product'.$product->getResource()
+        ->getAttribute('pdp_icon_2')->getFrontend()->getValue($product);
+        ?>
+        <div class="">
+            <img src="<?= /* @noEscape */ $pdp_icon_2;?>"/>
+        </div>
+    <?php }?>
+    <?php
+    if (!empty($product->getPdpIcon3()) && $product->getPdpIcon3() != 'no_selection') {
+        $pdp_icon_3 = $mediaUrl.'catalog/product'.$product->getResource()
+        ->getAttribute('pdp_icon_3')->getFrontend()->getValue($product);
+        ?>
+        <div class="">
+            <img src="<?= /* @noEscape */ $pdp_icon_3;?>"/>
+        </div>
+    <?php }?>
+    <?php
+    if (!empty($product->getPdpIcon4()) && $product->getPdpIcon4() != 'no_selection') {
+        $pdp_icon_4 = $mediaUrl.'catalog/product'.$product->getResource()
+        ->getAttribute('pdp_icon_4')->getFrontend()->getValue($product);
+        ?>
+        <div class="">
+            <img src="<?= /* @noEscape */ $pdp_icon_4;?>"/>
+        </div>
+    <?php }?>
+    <?php
+    if (!empty($product->getPdpIcon5()) && $product->getPdpIcon5() != 'no_selection') {
+        $pdp_icon_5 = $mediaUrl.'catalog/product'.$product->getResource()
+        ->getAttribute('pdp_icon_5')->getFrontend()->getValue($product);
+        ?>
+        <div class="">
+            <img src="<?= /* @noEscape */ $pdp_icon_5;?>"/>
+        </div>
+    <?php }?>
+    <?php
+    if (!empty($product->getPdpIcon6()) && $product->getPdpIcon6() != 'no_selection') {
+        $pdp_icon_6 = $mediaUrl.'catalog/product'.$product->getResource()
+        ->getAttribute('pdp_icon_6')->getFrontend()->getValue($product);
+        ?>
+        <div class="">
+            <img src="<?= /* @noEscape */ $pdp_icon_6;?>"/>
+        </div>
+    <?php }?>
+</div>
+<?php }?>
+
+    <?php if (!empty($product->getDesignerTools())) {?>
+    <div class="pdp_custom_design text-center py-6 px-10 w-full mb-12">
+        <div class="pdp_custom_design_left text-center">
+            <span class="pl-0 text-size17 font-medium text-custom-white">Want A Custom Design?</span>
+        </div>
+        <div class="pdp_custom_design_right">
+            <a href="javascript:void(0)" @click="customDesignClick"
+            class="bg-custom-white rounded-md text-size14 font-semibold text-custom-blue inline-block uppercase">
+                Try Our Flooring Designer
+            </a>
+        </div>        
+    </div>
+    <script>
+        function customDesignClick(){
+            var child_id = document.querySelector('input[name="selected_option_child_id"]').value; 
+            setCookie('designer_tool_id','<?= /* @noEscape */ $block->getProduct()->getId()?>_'+child_id)
+            var customDesignUrl = '<?= /* @noEscape */ $block->getUrl('designer')?>?id=<?= /* @noEscape */ $block
+            ->getProduct()->getId()?>';
+            window.location.href = customDesignUrl;
+        }
+
+        function setCookie(cName, cValue, expDays = 30) {
+            let date = new Date();
+            date.setTime(date.getTime() + (expDays * 24 * 60 * 60 * 1000));
+            const expires = "expires=" + date.toUTCString();
+            document.cookie = cName + "=" + cValue + "; " + expires + "; path=/";
+        }
+    </script>
+    <?php }?>
+    
+    <?= $block->getChildHtml('product.info.form') ?>
+    <input type="hidden" name="selected_option_child_id" value="" />
+    <div class="square_footage">
+        <div class="square_footage_in">
+            <?php if ($product->isSaleable()): ?>
+                <?php
+                if ($product->getAttributeText('product_floor_type') == 'Wooden flooring' ||
+                $product->getAttributeText('product_floor_type') == 'Carpet Tiles') {
+                    echo $block->getLayout()->createBlock(Magento\Catalog\Block\Product\View::class)
+                    ->setTemplate('Dcw_FlooringCalculation::product/view/quantity_case.phtml')->toHtml();
+                } elseif ($product->getAttributeText('product_floor_type') == 'Rubber Rolls') {
+                    echo $block->getLayout()->createBlock(Magento\Catalog\Block\Product\View::class)
+                    ->setTemplate('Dcw_FlooringCalculation::product/view/quantity_linearfoot.phtml')->toHtml();
+                } elseif ($product->getAttributeText('product_floor_type') == 'Rubber Tiles' ||
+                $product->getAttributeText('product_floor_type') == 'Tier Pricing') {
+                    echo $block->getLayout()->createBlock(Magento\Catalog\Block\Product\View::class)
+                    ->setTemplate('Dcw_FlooringCalculation::product/view/quantity_tile.phtml')->toHtml();
+                } elseif ($product->getData('HasCornerBorderCenter') == 1) {
+                    echo $block->getLayout()->createBlock(Magento\Catalog\Block\Product\View::class)
+                    ->setTemplate('Dcw_FlooringCalculation::product/view/quantity_cbc.phtml')->toHtml();
+                } elseif ($product->getAttributeText('product_floor_type') == 'Trailer Rolls') {
+                      echo $block->getLayout()->createBlock(Magento\Catalog\Block\Product\View::class)
+                    ->setTemplate('Dcw_FlooringCalculation::product/view/quantity_traile_rolls.phtml')->toHtml();
+
+                } else {
+                    echo $block->getLayout()->createBlock(Magento\Catalog\Block\Product\View::class)
+                    ->setTemplate('Dcw_FlooringCalculation::product/view/quantity.phtml')->toHtml();
+                }
+                ?>
+                <?php //echo $block->getChildHtml("product.info.quantity") ?>
+                <?= $block->getChildHtml("product.info.addtocart") ?>
+            <?php endif; ?>
+        </div>
+
+    </div>
+
+    <?php if ($product->isSaleable()): ?>
+        <div class="flex mt-4 justify-end hidden">
+            <?= $block->getChildHtml('addtocart.shortcut.buttons') ?>
+        </div>
+    <?php endif; ?>
+
+    <div class="flex mt-4 justify-end hidden">
+        <?= $block->getChildHtml('product.info.addtowishlist'); ?>
+        <?= $block->getChildHtml('product.info.addtocompare'); ?>
+        <?= $block->getChildHtml('product.info.emailtofriend'); ?>
+        <?= $block->getChildHtml('product.info.additional.actions'); ?>
+    </div>
+
+    <?php if ($tierPriceBlock = $block->getChildHtml("product.price.tier")): ?>
+        <div class="py-4 my-2 tier-price-container">
+            <?= /** @noEscape */ $tierPriceBlock ?>
+        </div>
+    <?php endif; ?>
+
+    <?= $block->getChildHtml("product.info.additional") ?>
+</div>
+
+<?php
+$related_products = $product->getRelatedProductCollection()->addAttributeToSelect('*');
+if (count($related_products) > 0) {
+    $modalViewModel = $viewModels->require(\Hyva\Theme\ViewModel\Modal::class);
+    $sliderViewModel = $viewModels->require(\Hyva\Theme\ViewModel\Slider::class);
+    $itemTemplate = 'Magento_Catalog::product/list/item.phtml';
+    $containerTemplate ='Magento_Catalog::product/slider/product-slider-container-related-popup.phtml';
+    $sliderHtml = $sliderViewModel->getSliderForItems($itemTemplate, $related_products, $containerTemplate)->toHtml();
+    ?>
+    <div class="related-product-dialog-wrapper" x-data="hyva.modal()">
+    <?= $modalViewModel->createModal()->withDialogRefName('related-product-slider-dialog')->withContent(<<<END_OF_CONTENT
+    <button @click="hide" type="button" class="btn close-x">
+    X
+    </button>
+    <div id="the-label"><h5>You May Also Need</h5></div>
+    <div class="">
+    {$sliderHtml}
+    </div>
+    END_OF_CONTENT
+    )
+    ->withAriaLabelledby('the-label')
+    ->addDialogClass('border', 'border-10', 'border-blue-800')
+    ?>
+    </div>
+<?php }?>

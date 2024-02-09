@@ -1,0 +1,11 @@
+<?php 
+$resp_arr = $block->getSiteWideBannerText();
+if($resp_arr["active"] == 1)
+{
+ if($resp_arr['glob_notif_5']!='') { ?>
+	<div class="notification5 pt-3 pb-3 text-center text-size13 font-normal text-white bg-custom-blue">
+	<?php echo $resp_arr['glob_notif_5']; ?>
+	</div>
+ <?php } 
+   
+} ?>

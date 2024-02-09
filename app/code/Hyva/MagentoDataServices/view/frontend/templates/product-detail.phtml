@@ -1,0 +1,50 @@
+<?php
+/**
+ * Copyright © Magento, Inc. All rights reserved.
+ * See COPYING.txt for license details.
+ */
+?>
+
+<?php
+/** @var \Magento\DataServices\Block\Context $block */
+?>
+
+<script>
+    "use strict";
+    window.addEventListener('load', function () {
+        magentoStorefrontEvents.context.setPage({
+            pageType: "<?= /* @noEscape */ $block->getData('page_type'); ?>"
+        });
+        magentoStorefrontEvents.context.setContext("pageExtended", {
+            action: "<?= /* @noEscape */ $block->getData('step_name'); ?>"
+        });
+        magentoStorefrontEvents.context.setProduct(<?= /* @noEscape */ $block->getEventContext(); ?>)
+
+        magentoStorefrontEvents.publish.productPageView();
+    });
+
+    window.addEventListener('productAddToCart', function () {
+        magentoStorefrontEvents.publish.addToCart();
+    });
+
+    function dataServicesAddToCartTracking() {
+        return {
+            checkIfProductIsAddedToBasket : function (data) {
+                let browserStorage = hyva.getBrowserStorage();
+
+                if (browserStorage) {
+                    let cartSummaryCount = data.cart.summary_count;
+                    let storageSummaryCount = browserStorage.getItem('cart_summary_count');
+
+                    if (cartSummaryCount > storageSummaryCount) {
+                        window.dispatchEvent(new Event("productAddToCart"));
+                    }
+                    browserStorage.setItem('cart_summary_count', data.cart.summary_count);
+                }
+            }
+        }
+    }
+</script>
+
+<div x-data="dataServicesAddToCartTracking()"
+     @private-content-loaded.window="checkIfProductIsAddedToBasket($event.detail.data)"></div>

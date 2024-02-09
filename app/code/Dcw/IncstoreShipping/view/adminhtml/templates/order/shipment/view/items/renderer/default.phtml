@@ -1,0 +1,17 @@
+<?php
+/**
+ * Copyright © Magento, Inc. All rights reserved.
+ * See COPYING.txt for license details.
+ */
+?>
+<?php $_item = $block->getItem() ?>
+<?php
+    $objectManager = \Magento\Framework\App\ObjectManager::getInstance(); // Instance of Object Manager
+    $priceHelper = $objectManager->create('Magento\Framework\Pricing\PriceCurrencyInterface');
+    $itemcoll = $objectManager->get('\Magento\Sales\Api\OrderItemRepositoryInterface')->get($_item->getOrderItemId())->getData();
+?>
+<tr class="border">
+    <td class="col-product"><?= $block->getColumnHtml($_item, 'name') ?></td>
+    <td class="col-qty"><?= /* @noEscape */ $_item->getQty()*1 ?></td>
+    <td class="col-total"><?php if (!empty($itemcoll) && $itemcoll['incstore_item_shipping']!="") { echo $priceHelper->convertAndFormat($itemcoll['incstore_item_shipping']);} ?></td>
+</tr>

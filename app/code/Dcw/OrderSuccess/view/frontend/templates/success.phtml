@@ -1,0 +1,86 @@
+<?php
+/**
+ * Copyright © Magento, Inc. All rights reserved.
+ * See COPYING.txt for license details.
+ */
+?>
+<?php /** @var $block \Dcw\OrderSuccess\Block\Onepage\Success */ 
+$order=$block->getOrderDetail();
+    
+?>
+<div class="checkout-success">
+    <div class="checkout-success-content">
+        <div class="checkout-success-content-in text-center" style="background: #EAF5EE;">
+            <?php if ($block->getOrderId()) :?>
+                <?php if ($block->getCanViewOrder()) :?>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="94" height="94" viewBox="0 0 94 94" fill="none">
+<path d="M40.1333 55.0667L29.9833 44.9167C29.1278 44.0611 28.0778 43.6333 26.8333 43.6333C25.5889 43.6333 24.5 44.1 23.5667 45.0333C22.7111 45.8889 22.2833 46.9778 22.2833 48.3C22.2833 49.6222 22.7111 50.7111 23.5667 51.5667L36.8667 64.8667C37.7222 65.7222 38.8111 66.15 40.1333 66.15C41.4556 66.15 42.5444 65.7222 43.4 64.8667L69.8833 38.3833C70.7389 37.5278 71.1667 36.4778 71.1667 35.2333C71.1667 33.9889 70.7 32.9 69.7667 31.9667C68.9111 31.1111 67.8222 30.6833 66.5 30.6833C65.1778 30.6833 64.0889 31.1111 63.2333 31.9667L40.1333 55.0667ZM46.6667 93.3333C40.2111 93.3333 34.1444 92.1076 28.4667 89.656C22.7889 87.2076 17.85 83.8833 13.65 79.6833C9.45 75.4833 6.12578 70.5444 3.67733 64.8667C1.22578 59.1889 0 53.1222 0 46.6667C0 40.2111 1.22578 34.1444 3.67733 28.4667C6.12578 22.7889 9.45 17.85 13.65 13.65C17.85 9.45 22.7889 6.12422 28.4667 3.67267C34.1444 1.22422 40.2111 0 46.6667 0C53.1222 0 59.1889 1.22422 64.8667 3.67267C70.5444 6.12422 75.4833 9.45 79.6833 13.65C83.8833 17.85 87.2076 22.7889 89.656 28.4667C92.1076 34.1444 93.3333 40.2111 93.3333 46.6667C93.3333 53.1222 92.1076 59.1889 89.656 64.8667C87.2076 70.5444 83.8833 75.4833 79.6833 79.6833C75.4833 83.8833 70.5444 87.2076 64.8667 89.656C59.1889 92.1076 53.1222 93.3333 46.6667 93.3333Z" fill="#299752"/>
+</svg>
+                    <h3><?= $block->escapeHtml(__('Your order is complete!')) ?> </h3>
+                    <p class="number"><?= $block->escapeHtml(__('Your order number is: %1.', sprintf('<a href="%s" class="order-number"><strong>%s</strong></a>', $block->escapeUrl($block->getViewOrderUrl()), $block->getOrderId())), ['a', 'strong']) ?></p>
+                <?php  else :?>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="94" height="94" viewBox="0 0 94 94" fill="none">
+<path d="M40.1333 55.0667L29.9833 44.9167C29.1278 44.0611 28.0778 43.6333 26.8333 43.6333C25.5889 43.6333 24.5 44.1 23.5667 45.0333C22.7111 45.8889 22.2833 46.9778 22.2833 48.3C22.2833 49.6222 22.7111 50.7111 23.5667 51.5667L36.8667 64.8667C37.7222 65.7222 38.8111 66.15 40.1333 66.15C41.4556 66.15 42.5444 65.7222 43.4 64.8667L69.8833 38.3833C70.7389 37.5278 71.1667 36.4778 71.1667 35.2333C71.1667 33.9889 70.7 32.9 69.7667 31.9667C68.9111 31.1111 67.8222 30.6833 66.5 30.6833C65.1778 30.6833 64.0889 31.1111 63.2333 31.9667L40.1333 55.0667ZM46.6667 93.3333C40.2111 93.3333 34.1444 92.1076 28.4667 89.656C22.7889 87.2076 17.85 83.8833 13.65 79.6833C9.45 75.4833 6.12578 70.5444 3.67733 64.8667C1.22578 59.1889 0 53.1222 0 46.6667C0 40.2111 1.22578 34.1444 3.67733 28.4667C6.12578 22.7889 9.45 17.85 13.65 13.65C17.85 9.45 22.7889 6.12422 28.4667 3.67267C34.1444 1.22422 40.2111 0 46.6667 0C53.1222 0 59.1889 1.22422 64.8667 3.67267C70.5444 6.12422 75.4833 9.45 79.6833 13.65C83.8833 17.85 87.2076 22.7889 89.656 28.4667C92.1076 34.1444 93.3333 40.2111 93.3333 46.6667C93.3333 53.1222 92.1076 59.1889 89.656 64.8667C87.2076 70.5444 83.8833 75.4833 79.6833 79.6833C75.4833 83.8833 70.5444 87.2076 64.8667 89.656C59.1889 92.1076 53.1222 93.3333 46.6667 93.3333Z" fill="#299752"/>
+</svg>
+                    <h3><?= $block->escapeHtml(__('Your order is complete!')) ?></h3>
+                    <p class="number"><?= $block->escapeHtml(__('Your order number is <span>%1</span>', $block->getOrderId()), ['span']) ?></p>
+                <?php endif;?>
+                    <p><?= $block->escapeHtml(__('We\'ll email you an order confirmation with details and tracking info.')) ?></p>
+            <?php endif;?>
+
+            <?= $block->getAdditionalInfoHtml() ?>
+
+            <div class="actions-toolbar">
+                <div class="primary">
+                    <a class="action primary continue" href="<?= $block->escapeUrl($block->getContinueUrl()) ?>"><span><?= $block->escapeHtml(__('Continue Shopping')) ?></span></a>
+                </div>
+            </div>
+        </div>
+        <div class="show-order">
+            <table class="w-full">
+                <thead>
+                    <tr>                       
+                        <th class="table-number text-size16 font-bold text-black"><?= __('Item') ?></th>
+                        <th class="table-number text-size16 font-bold text-black"><?= __('Qty') ?></th>
+                        <th class="table-number text-size16 font-bold text-black"><?= __('Subtotal') ?></th>
+                    </tr>
+                </thead>
+                <tbody>   
+                        <?php 
+                        $items = $order->getItemsCollection();
+                        foreach ($items as $item) {
+                            if($item->getParentItem()) { continue; } 
+                    ?>
+                                <tr class="data-item">
+                                    <td class="text-size14 font-semibold text-black"><?= $item->getName();?>
+                                    <p class="order-sku hidden"><?= "SKU " .$item->getSku();?></p>
+                                    <?php
+                                        $options = $block->getItemOptions($item);
+                                        if($options){
+                                            foreach($options as  $option) {
+                                            ?>
+                                                <dl>
+                                                    <dt class="text-size14 font-normal text-black"><?= $option['label'].' ' ?> <span class="font-semibold text-custom-blue"><?= $option['value'] ?></span></dt>
+                                                </dl>                      
+                                            <?php 
+                                            }
+                                            } 
+                                    ?>
+                                    </td>
+                                    <td class="table-number text-size14 font-semibold text-black"><?= (int)$item->getQtyOrdered();?></td> 
+                                    <td class="table-number text-size14 font-semibold text-black"><?= $block->formatPrice($item->getRowTotal())?></td>
+                                </tr>
+                        <?php
+                        }    
+                        ?>
+                </tbody>    
+            </table>
+        </div>
+    </div>
+    </div>            
+</div>
+<style>
+    .checkout-onepage-success #maincontent .columns .column.main + .container {
+        display: none;
+    }
+</style>    

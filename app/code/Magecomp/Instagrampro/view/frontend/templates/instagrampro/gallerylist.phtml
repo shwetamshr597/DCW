@@ -1,0 +1,305 @@
+<?php
+if (count($block->getInstagrampropageGalleryImages()) > 0): ?>
+
+    <div class="instagrampro-view instagrampro-gallary clearer">
+        <?php
+        $count = 0;
+        $linkurl = "javascript:void(0);";
+        foreach ($block->getInstagrampropageGalleryImages() as $_image):
+            $count++;
+            $id = $_image->getImageId();
+            $imagetitle = $_image->getImageTitle();
+            ?>
+            <div id="mainimgdiv">
+
+                <?php if ($_image->getMediaType() == "image" || $_image->getMediaType() == "carousel_album") { ?>
+                    <a href="<?php echo $linkurl; ?>" target="_blank">
+                        <img data-src="<?php echo $_image->getThumbnailUrl(); ?>" src="<?php echo $block->getPlaceHolderImage(); ?>" alt="<?php echo __($imagetitle); ?>"
+                             title="<?php echo $imagetitle; ?>" onmouseover="showinstadesc(<?php echo $count ?>);"
+                             onmouseout="hideinstadesc(<?php echo $count ?>);" class="lazy" width="295" height="295"/>
+                    </a>
+
+                    <div class="hoverp" id="<?php echo "phover" . $count ?>"
+                         onmouseover="showinstadesc(<?php echo $count ?>);"
+                         onmouseout="hideinstadesc(<?php echo $count ?>);"
+                         onclick="javascript:showpopupaction('<?php echo $id ?>',<?php echo $count ?>);">
+                        <div id="innerdiv">
+                            <div class="hover-description">
+                                <?php
+                                if (strlen($_image->getImageDesc()) > 250) {
+                                    echo __(substr($_image->getImageDesc(), 0, 250) . "...");
+                                } else {
+                                    echo __(substr($_image->getImageDesc(), 0, 250));
+                                }
+                                ?>
+                            </div>
+
+                            <span class="imagecomments"><i class="fa fa-comments-o"
+                                                        aria-hidden="true"></i><?php echo $_image->getImageComments(); ?></span>
+                            <span class="imagelikes"><i class="fa fa-heart"
+                                                        aria-hidden="true"></i><?php echo $_image->getImageLikes(); ?></span>
+                        </div>
+                    </div>
+                    <input type="hidden" name="<?php echo 'curimageid' . $count; ?>"
+                           id="<?php echo 'curimageid' . $count; ?>" value="<?php echo $id ?>"/>
+                <?php } else { ?>
+                    <a href="<?php echo $linkurl; ?>" target="_blank">
+                        <video width="100%" controls onmouseover="showinstadesc(<?php echo $count ?>);"
+                               onmouseout="hideinstadesc(<?php echo $count ?>);" style="margin-top: 20%;">
+                            <source src="<?php echo $_image->getThumbnailUrl(); ?>" type="video/mp4">
+                            Your browser does not support the video tag.
+                        </video>
+                    </a>
+                    <div class="hoverp" id="<?php echo "phover" . $count ?>" onmouseover="showinstadesc(<?php echo $count ?>);"
+                         onmouseout="hideinstadesc(<?php echo $count ?>);"
+                         onclick="javascript:showpopupaction('<?php echo $id ?>',<?php echo $count ?>);">
+                        <div id="innerdiv">
+
+                            <span class="imagecomments"><i class="fa fa-comments-o"
+                                                        aria-hidden="true"></i><?php echo $_image->getImageComments(); ?></span>
+                            <span class="imagelikes"><i class="fa fa-heart"
+                                                        aria-hidden="true"></i><?php echo $_image->getImageLikes(); ?></span>
+                        </div>
+                    </div>
+                    <input type="hidden" name="<?php echo 'curimageid' . $count; ?>"
+                           id="<?php echo 'curimageid' . $count; ?>" value="<?php echo $id ?>"/>
+                <?php } ?>
+            </div>
+        <?php endforeach; ?>
+    </div>
+
+    <input type="hidden" name="curimage" id="curimage" value="0"/>
+    <div id="popupdiv">
+        <div id="backgrounddiv">
+            <div id="loadingdiv"></div>
+            <div id="whitebgdiv"></div>
+        </div>
+    </div>
+
+    <script type="text/javascript">
+
+        !function(window){
+            var $q = function(q, res){
+                    if (document.querySelectorAll) {
+                        res = document.querySelectorAll(q);
+                    } else {
+                        var d=document
+                            , a=d.styleSheets[0] || d.createStyleSheet();
+                        a.addRule(q,'f:b');
+                        for(var l=d.all,b=0,c=[],f=l.length;b<f;b++)
+                            l[b].currentStyle.f && c.push(l[b]);
+
+                        a.removeRule(0);
+                        res = c;
+                    }
+                    return res;
+                }
+                , addEventListener = function(evt, fn){
+                    window.addEventListener
+                        ? this.addEventListener(evt, fn, false)
+                        : (window.attachEvent)
+                        ? this.attachEvent('on' + evt, fn)
+                        : this['on' + evt] = fn;
+                }
+                , _has = function(obj, key) {
+                    return Object.prototype.hasOwnProperty.call(obj, key);
+                }
+            ;
+
+            function loadImage (el, fn) {
+                var img = new Image()
+                    , src = el.getAttribute('data-src');
+                img.onload = function() {
+                    if (!! el.parent)
+                        el.parent.replaceChild(img, el)
+                    else
+                        el.src = src;
+
+                    fn? fn() : null;
+                }
+                img.src = src;
+            }
+
+            function elementInViewport(el) {
+                var rect = el.getBoundingClientRect()
+
+                return (
+                    rect.top    >= 0
+                    && rect.left   >= 0
+                    && rect.top <= (window.innerHeight || document.documentElement.clientHeight)
+                )
+            }
+
+            var images = new Array()
+                , query = $q('img.lazy')
+                , processScroll = function(){
+                    for (var i = 0; i < images.length; i++) {
+
+                        if (elementInViewport(images[i])) {
+                            loadImage(images[i], function () {
+                                images.splice(i, i);
+                            });
+                        }
+                    };
+                }
+            ;
+            // Array.prototype.slice.call is not callable under our lovely IE8
+            for (var i = 0; i < query.length; i++) {
+                images.push(query[i]);
+            };
+
+            processScroll();
+            addEventListener('scroll',processScroll);
+
+        }(this);
+
+        function showinstadesc(Id) {
+            jQuery("#phover" + Id).addClass('instagramproshow');
+        }
+
+        function hideinstadesc(Id) {
+            jQuery("#phover" + Id).removeClass('instagramproshow');
+        }
+
+        function closepopup() {
+            jQuery('#backgrounddiv').css('display', 'none');
+            jQuery('#loadingdiv').css('display', 'none');
+            jQuery('#whitebgdiv').css('display', 'none');
+
+        }
+
+        function showpopupaction(ImgId, ImgNum) {
+            jQuery('#curimage').val(ImgNum);
+
+            var formurl = '<?php echo $block->getGalleryPopupUrl(); ?>';
+
+            jQuery.ajax({
+                type: "POST",
+                url: formurl,
+                data: {Id: ImgId},
+                beforeSend: function () {
+                    jQuery('#whitebgdiv').css('display', 'none');
+                    jQuery('#backgrounddiv').css('display', 'block');
+                    jQuery('#loadingdiv').css('display', 'block');
+                },
+                success: function (transport) {
+                    var response = transport || "no response text";
+                    jQuery('#backgrounddiv').html(response);
+
+                    //effact on popup js code
+                    jQuery('.alltitleul > li').hover(function (e) {
+
+                        var classname = jQuery(this).attr('class');
+                        var xy = classname.split('-');
+                        <?php if ($block->showProductInPopup()): ?>
+
+                        jQuery('#titletext').html(jQuery(this).find('div').html());
+                        <?php else: ?>
+                        jQuery('#titletext').html(jQuery(this).html());
+                        <?php endif; ?>
+                        jQuery('#titletext').css('top', xy[0] + 'px');
+                        jQuery('#titletext').css('left', xy[1] + 'px');
+                    });
+
+                    jQuery('.alltitleul > li').mouseleave(function (e) {
+                        jQuery('#titletext').html('');
+                    });
+                    slideIndex = 1;
+                    showDivs(slideIndex);
+                },
+                error: function () {
+                    alert('Something went wrong...');
+                }
+            });
+        }
+
+        function prevnextpopup(Acn) {
+            //Acn 1=Prev 2=Next
+            var curimg = parseInt(jQuery('#curimage').val());
+            if (Acn == 1)// Prev
+            {
+                curimg = curimg - 1;
+                if (curimg <= 0) {
+                    curimg = <?php echo $count ?>;
+                }
+
+            } else // Next
+            {
+                curimg = curimg + 1;
+                if (curimg > <?php echo $count ?>) {
+                    curimg = 1;
+                }
+            }
+
+            var ImgId = jQuery('#curimageid' + curimg).val();
+            showpopupaction(ImgId, curimg);
+        }
+
+        var slideIndex = 1;
+
+        function plusDivs(n) {
+            showDivs(slideIndex += n);
+        }
+
+        function showDivs(n) {
+            var i;
+            var x = document.getElementsByClassName("mySlides");
+            if (n > x.length) {
+                slideIndex = 1
+            }
+            if (n < 1) {
+                slideIndex = x.length
+            }
+            ;
+            for (i = 0; i < x.length; i++) {
+                x[i].style.display = "none";
+            }
+
+            if (x.length > 0) {
+                x[slideIndex - 1].style.display = "block";
+            }
+
+            if (slideIndex == 1) {
+                jQuery("#titletext").show();
+            }
+            else {
+                jQuery("#titletext").hide();
+            }
+        }
+        function changeprodtoleft(prodId) {
+            jQuery(".insta-popup-product-view-left-img img").css('opacity','0.4');
+            jQuery("#popprdloadingdiv").css('display','block');
+            var formurl = '<?php echo $block->getPopupChangeProductUrl(); ?>';
+            jQuery.ajax({
+                type: "GET",
+                url: formurl,
+                data: {id: prodId},
+                dataType: "json",
+                showLoader: true,
+                async: false,
+                success: function (transport) {
+                    jQuery("#popprdloadingdiv").css('display','none');
+                    jQuery(".insta-popup-product-view-left-img img").css('opacity','1');
+                    var response = transport || "no response text";
+                    jQuery(".insta-popup-product-view-left-img img").attr('src',response['prodimg']);
+                    jQuery(".insta-popup-product-view-left-img a").attr('href',response['produrl']);
+                    jQuery(".popup-img-desc .instatitle").text(response['prodname']);
+                    jQuery(".popup-img-desc .popup-img-desc-part").text(response['proddesc']);
+
+                    jQuery(".fb-share-link").attr("href","https://www.facebook.com/sharer/sharer.php?u="+response["produrl"]+"&t="+response["prodname"]);
+                    jQuery(".tiwtter-share-link").attr("href","https://twitter.com/share?url="+response['produrl']+"&text="+response['prodname']);
+                    jQuery(".linkedin-share-link").attr("href","https://www.linkedin.com/shareArticle?mini=true&url="+response['produrl']+"&title="+response['prodname']);
+
+
+                },
+                error: function () {
+                jQuery("#popprdloadingdiv").css('display','none');
+                    jQuery(".insta-popup-product-view-left-img img").css('opacity','1');
+                    alert('Something went wrong...');
+                }
+            });
+        }
+    </script>
+
+<?php endif; ?>
+

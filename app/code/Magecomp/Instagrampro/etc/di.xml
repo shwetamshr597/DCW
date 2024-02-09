@@ -1,0 +1,26 @@
+<?xml version="1.0"?>
+<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:framework:ObjectManager/etc/config.xsd">
+    <type name="Magento\Catalog\Block\Product\View\Gallery">
+        <plugin name="magecomp_instagrampro_plugin_block_catalog_product_view_gallery"
+                type="Magecomp\Instagrampro\Block\Catalog\Product\View\Gallery"
+                sortOrder="10"
+                disabled="false"/>
+    </type>
+    <type name="Magecomp\Instagrampro\Model\ResourceModel\Instagramproimage\Grid\Collection">
+        <arguments>
+            <argument name="mainTable" xsi:type="string">instagrampro_image</argument>
+            <argument name="eventPrefix" xsi:type="string">instagrampro_proindex_grid_collection</argument>
+            <argument name="eventObject" xsi:type="string">instagrampro_proindex_grid_collection</argument>
+            <argument name="resourceModel" xsi:type="string">Magecomp\Instagrampro\Model\ResourceModel\Instagramproimage</argument>
+        </arguments>
+    </type>
+    <type name="Magento\Framework\View\Element\UiComponent\DataProvider\CollectionFactory">
+        <arguments>
+            <argument name="collections" xsi:type="array">
+                <item name="instagrampro_proindex_grid_data_source" xsi:type="string">Magecomp\Instagrampro\Model\ResourceModel\Instagramproimage\Grid\Collection</item>
+            </argument>
+        </arguments>
+    </type>
+
+    <preference for="Magecomp\Instagrampro\Api\InstagramProManagementInterface" type="Magecomp\Instagrampro\Model\InstagramProManagement" />
+</config>

@@ -1,0 +1,31 @@
+<?php
+/**
+ * Copyright © Magento, Inc. All rights reserved.
+ * See COPYING.txt for license details.
+ */
+?>
+<?php /** @var $block \Magento\Sales\Block\Adminhtml\Items\Renderer\DefaultRenderer */ ?>
+<?php $_item = $block->getItem() ?>
+<?php $_item->setStoreId($_item->getInvoice()->getStoreId()) ?>
+<?php $block->setPriceDataObject($_item) ?>
+<?php
+    $objectManager = \Magento\Framework\App\ObjectManager::getInstance(); // Instance of Object Manager
+    $priceHelper = $objectManager->create('Magento\Framework\Pricing\PriceCurrencyInterface');
+    $itemcoll = $objectManager->get('\Magento\Sales\Api\OrderItemRepositoryInterface')->get($_item->getOrderItemId())->getData();
+?>
+<tr>
+    <td class="col-product"><?= $block->getColumnHtml($_item, 'name') ?></td>
+    <td class="col-price">
+        <?= $block->getColumnHtml($_item, 'price') ?>
+    </td>
+    <td class="col-qty"><?= (float) $_item->getQty() ?></td>
+    <td class="col-subtotal">
+        <?= $block->getColumnHtml($_item, 'subtotal') ?>
+    </td>
+    <td class="col-tax"><?= /* @noEscape */ $block->displayPriceAttribute('tax_amount') ?></td>
+    <td class="col-discount"><?= /* @noEscape */ $block->displayPriceAttribute('discount_amount') ?></td>
+    <td class="col-total">
+        <?= $block->getColumnHtml($_item, 'total') ?>
+    </td>
+    <td class="col-total"><?php if (!empty($itemcoll) && $itemcoll['incstore_item_shipping']!="") { echo $priceHelper->convertAndFormat($itemcoll['incstore_item_shipping']);} ?></td>
+</tr>

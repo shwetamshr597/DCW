@@ -1,0 +1,8 @@
+<?xml version="1.0"?>
+<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:framework:ObjectManager/etc/config.xsd">
+    <!--<preference for="Dcw\OrderExtensionAttributes\Api\ExtensionAttributeManagementInterface" type="Dcw\OrderExtensionAttributes\Model\ExtensionAttributeManagement" />-->
+    <preference for="Dcw\OrderExtensionAttributes\Api\Data\OrderItemAttributeInterface" type="Dcw\OrderExtensionAttributes\Model\OrderItemAttribute" />
+    <type name="Magento\Sales\Api\OrderRepositoryInterface">
+        <plugin name="load_orderattributes" type="Dcw\OrderExtensionAttributes\Plugin\Model\Order\LoadOrderAttributes"/>
+    </type>
+</config>

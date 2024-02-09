@@ -1,0 +1,120 @@
+<?php
+/**
+ * Hyvä Themes - https://hyva.io
+ * Copyright © Hyvä Themes 2020-present. All rights reserved.
+ * This product is licensed per Magento install
+ * See https://hyva.io/license
+ */
+
+/**
+ * The AlpineJS scope of this file is the method `initCartTotals()` in Magento_Checkout::php-cart/totals.phtml
+ */
+?>
+<!-- display subtotal including and excluding tax -->
+<template x-if="segment.code === 'subtotal' && 'both' === checkoutConfig.reviewTotalsDisplayMode">
+    <div>
+        <div class="flex pb-2 mt-5 border-gray-300 text-md lg:text-sm md:grid md:grid-cols-2 md:w-full border-container">
+            <div class="w-7/12 text-left md:w-auto text-size16 font-medium" style="color:#252525"
+                 x-html="`${segment.title} (${excludingTaxMessage})` "
+            ></div>
+            <div class="w-5/12 text-right md:w-auto text-size16 font-medium" style="color:#252525"
+                 x-text="hyva.formatPrice(totalsData.subtotal)"
+            ></div>
+        </div>
+
+        <div class="flex pb-2 mt-5 text-md lg:text-sm md:grid md:grid-cols-2 md:w-full border-container">
+            <div class="w-7/12 text-left md:w-auto text-size16 font-medium" style="color:#252525"
+                 x-html="`${segment.title} (${includingTaxMessage})` "
+            ></div>
+            <div class="w-5/12 text-right md:w-auto text-size16 font-medium" style="color:#252525"
+                 x-text="hyva.formatPrice(totalsData.subtotal_incl_tax)"
+            ></div>
+        </div>
+    </div>
+</template>
+
+<template x-if="segment.code === 'amasty_extrafee' && segment.value != 0">
+<div class="title hideadditional" data-role="title">
+					<span @click="toggleadditionalfeestotals"
+						  class="flex justify-between w-full font-medium whitespace-nowrap cursor-pointer select-none text-primary-lighter pt-2" style="color:#252525"
+						  id="additonal-fees-id"
+						  role="heading" aria-level="2"
+					> Additional Fees
+						
+						<span :class="{ 'rotate-180' : showAdditionalFeesTotals}" class="block transform rotate-180">
+							<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" width="18" height="25">
+								<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+							</svg>
+						</span>
+					</span>
+</div>
+</template>
+
+<template x-if="segment.code === 'amasty_extrafee' && segment.value != 0  && 'both' === checkoutConfig.reviewTotalsDisplayMode">
+    <div>
+        <div class="flex pb-2 mt-5 border-gray-300 text-md lg:text-sm md:grid md:grid-cols-2 md:w-full border-container" x-show="showAdditionalFeesTotals">
+            <div class="w-7/12 text-left md:w-auto text-size16 font-medium" style="color:#252525"
+                 x-html="`${segment.title} (${excludingTaxMessage})` "
+            ></div>
+            <div class="w-5/12 text-right md:w-auto text-size16 font-medium" style="color:#252525"
+                 x-text="hyva.formatPrice(segment.value)"
+            ></div>
+        </div>
+
+        <div class="flex pb-2 mt-5 text-md lg:text-sm md:grid md:grid-cols-2 md:w-full border-container">
+            <div class="w-7/12 text-left md:w-auto text-size16 font-medium" style="color:#252525"
+                 x-html="`${segment.title} (${includingTaxMessage})` "
+            ></div>
+            <div class="w-5/12 text-right md:w-auto text-size16 font-medium" style="color:#252525"
+                 x-text="hyva.formatPrice(segment.value)"
+            ></div>
+        </div>
+    </div>
+</template>
+
+<!-- display subtotal excluding tax -->
+
+<template x-if="segment.code === 'amasty_extrafee' && segment.value != 0  &&  'excluding' === checkoutConfig.reviewTotalsDisplayMode">
+    <div class="flex pb-2 mt-2 text-md lg:text-sm md:grid md:grid-cols-2 md:w-full border-container additionalshow" x-show="showAdditionalFeesTotals">
+        <div class="w-7/12 text-left md:w-auto text-size14 font-medium" style="color:#252525"
+             x-html="`${segment.title}` "
+        ></div>
+        <div class="w-5/12 text-right md:w-auto text-size14 font-medium" style="color:#252525"
+             x-text="hyva.formatPrice(segment.value)"
+        ></div>
+    </div>
+</template>
+
+<template x-if="segment.code === 'subtotal' && 'excluding' === checkoutConfig.reviewTotalsDisplayMode">
+    <div class="flex pb-2 mt-5 text-md lg:text-sm md:grid md:grid-cols-2 md:w-full border-container">
+        <div class="w-7/12 text-left md:w-auto text-size16 font-medium" style="color:#252525"
+             x-html="`${segment.title}` "
+        ></div>
+        <div class="w-5/12 text-right md:w-auto text-size16 font-medium" style="color:#252525"
+             x-text="hyva.formatPrice(totalsData.subtotal)"
+        ></div>
+    </div>
+</template>
+
+<!-- display subtotal including tax -->
+<template x-if="segment.code === 'subtotal' && 'including' === checkoutConfig.reviewTotalsDisplayMode">
+    <div class="flex pb-2 mt-5 text-md lg:text-sm md:grid md:grid-cols-2 md:w-full border-container">
+        <div class="w-7/12 text-left md:w-auto text-size16 font-medium" style="color:#252525"
+             x-html="`${segment.title}`"
+        ></div>
+        <div class="w-5/12 text-right md:w-auto text-size16 font-medium" style="color:#252525"
+             x-text="hyva.formatPrice(totalsData.subtotal_incl_tax)"
+        ></div>
+    </div>
+</template>
+
+<template x-if="segment.code === 'amasty_extrafee' && segment.value != 0  && 'including' === checkoutConfig.reviewTotalsDisplayMode">
+    <div class="flex pb-2 mt-5 text-md lg:text-sm md:grid md:grid-cols-2 md:w-full border-container" x-show="showAdditionalFeesTotals">
+        <div class="w-7/12 text-left md:w-auto text-size16 font-medium" style="color:#252525"
+             x-html="`${segment.title}`"
+        ></div>
+        <div class="w-5/12 text-right md:w-auto text-size16 font-medium" style="color:#252525"
+             x-text="hyva.formatPrice(segment.value)"
+        ></div>
+    </div>
+</template>

@@ -1,0 +1,15 @@
+type Query
+{
+    getConfigData : Response @resolver(class: "Magecomp\\Instagramprographql\\Model\\Resolver\\GetConfigData")
+    getImageData(
+        page: String @doc(description: "Page name either Home or Product page")
+    ) : Response @resolver(class: "Magecomp\\Instagramprographql\\Model\\Resolver\\GetImageData")
+    getProductPageImageData(
+        productId: Int @doc(description: "Product Id")
+    ) : Response @resolver(class: "Magecomp\\Instagramprographql\\Model\\Resolver\\GetProductPageImageData")
+}
+type Response
+{
+    status: Boolean
+    response: String
+}

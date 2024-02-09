@@ -1,0 +1,144 @@
+<?php
+$objectManager      = \Magento\Framework\App\ObjectManager::getInstance();
+$storeManager = $objectManager->get(\Magento\Store\Model\StoreManagerInterface::class);
+$mobile_limit = $objectManager->get(\Magento\Framework\App\Config\ScopeConfigInterface::class)
+->getValue('dcw_home_page/featured_partner/mobile_limit', \Magento\Store\Model\ScopeInterface::SCOPE_STORE);
+if (empty($desktop_limit)) {
+    $desktop_limit = 7;
+}
+$place_holder_img = $objectManager->get(\Magento\Framework\App\Config\ScopeConfigInterface::class)
+->getValue('catalog/placeholder/thumbnail_placeholder', \Magento\Store\Model\ScopeInterface::SCOPE_STORE);
+$mediaUrl = $storeManager->getStore()->getBaseUrl(\Magento\Framework\UrlInterface::URL_TYPE_MEDIA);
+$place_holder_img_src =  $mediaUrl.'catalog/product/'.$place_holder_img;
+$categoryCollection = $objectManager
+    ->get(\Magento\Catalog\Model\ResourceModel\Category\CollectionFactory::class);
+$categories = $categoryCollection->create();
+$categories->addAttributeToSelect('*');
+$categories->addAttributeToFilter('featured_partner', 1);
+$no_of_item = $categories->count();
+?>
+<div x-data="{swiper: null}"
+  x-init="swiper = new Swiper($refs.container, {
+     initialSlide: 0,
+      activeIndex: 0, 
+      grabCursor: true,
+      slidesPerView:2 ,
+      spaceBetween: 10,
+      observer: true,
+      observeParents: true,
+      slidesPerGroup: 2 ,
+      parallax:true,
+      navigation: {
+        nextEl: '.swiper-button-next',
+        prevEl: '.swiper-button-prev',
+    },
+      autoplay: {
+        delay: 3000,
+      },
+      breakpoints: {
+        640: {
+          slidesPerView: 2,
+          spaceBetween: 0,
+        },
+        768: {
+          slidesPerView: 2,
+          spaceBetween: 0,
+        },
+        1024: {
+          slidesPerView: 2,
+          spaceBetween: 0,
+        },
+      },
+    })"
+  class="relative w-full mx-auto"
+>
+
+<?php if($no_of_item > 7 ){?>
+  	<div class="heading_fe_part">Featured Partners</div>
+  		<button class="swiper-button-prev"></button>
+		<div class="swiper-container w-full" x-ref="container">
+			<div class="swiper-wrapper" x-data="featuredPartnerAjaxCall()" x-init="initFeaturedPartnerFunc()">
+				<template x-for="item in categories.items">
+					<div class="swiper-slide">
+						<div class="flex flex-col rounded shadow overflow-hidden">
+							<div class="flex-shrink-0">
+								<a x-bind:href="BASE_URL+item.url_path+item.url_suffix">
+									<img x-show="item.image" x-bind:src="item.image+'?width=155'"/>
+									<img x-show="!item.image" src="<?= /* @noEscape */ $place_holder_img_src;?>"/>
+								</a>
+							</div>
+						</div>
+					</div>
+				</template>
+			</div>
+		</div>
+		<button class="swiper-button-next"></button>
+  <?php }else if($no_of_item > 0){ ?>
+    <div class="heading_fe_part">Featured Partners</div>
+		<div class="swiper-container w-full" x-ref="container">
+			<div class="swiper-wrapper" x-data="featuredPartnerAjaxCall()" x-init="initFeaturedPartnerFunc()">
+			<template x-for="item in categories.items">
+					<div class="swiper-slide">
+						<div class="flex flex-col rounded shadow overflow-hidden">
+							<div class="flex-shrink-0">
+								<a x-bind:href="BASE_URL+item.url_path+item.url_suffix">
+									<img x-show="item.image" x-bind:src="item.image+'?width=155'"/>
+									<img x-show="!item.image" src="<?= /* @noEscape */ $place_holder_img_src;?>"/>
+								</a>
+							</div>
+						</div>
+					</div>
+				</template>
+			</div>
+  	</div>
+<?php } ?>
+</div>
+<?php
+$body_data = '{categories(filters: {featured_partner: {eq:1}} pageSize:'.$mobile_limit.')'.
+'{items{name image url_path url_suffix sort_by_featured_partner}}}';
+
+?>
+<script>
+  function featuredPartnerAjaxCall() {
+    return {
+        categories:'',
+        initFeaturedPartnerFunc: function () {
+            fetch(BASE_URL+'graphql?form_key=' + hyva.getFormKey(), {
+                method: "POST",
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ query:'<?= /* @noEscape */ $body_data?>'}),
+            })
+            .then(response => {
+                if (! response.ok) console.warn('GET request failed');
+                return response.json();
+            })
+            .then(data => {
+                if (data) {
+                  this.categories = data.data.categories;
+                  console.log(this.categories);
+                  this.categories.items.sort((a, b) => {
+                      let fa = a['sort_by_featured_partner'],
+                          fb = b['sort_by_featured_partner'];
+                        if (fa < fb) {
+                          console.log(":ifff)");
+                            return -1;
+                        }
+                        if (fa > fb) {                        
+                          console.log(":ifff 222");
+                          return 1;
+                        }
+                        return 0;
+                    });
+                  }
+            })
+        .finally(() => {
+        this.categories.items.sort((a, b) =>
+        (a['sort_by_featured_partner'] > b['sort_by_featured_partner'] &&
+     a['sort_by_featured_partner'] && b['sort_by_featured_partner'])? 1 :
+        (a['sort_by_featured_partner'] < b['sort_by_featured_partner'] &&
+     a['sort_by_featured_partner'] && b['sort_by_featured_partner'])?-1:0);
+        });
+        }
+    }
+  }
+</script>

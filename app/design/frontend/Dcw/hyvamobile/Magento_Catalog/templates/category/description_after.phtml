@@ -1,0 +1,48 @@
+<?php 
+$currentCategory = $block->getCurrentCategory();
+$AllcatId = \Magento\Framework\App\ObjectManager::getInstance()
+->get('Magento\Framework\App\Config\ScopeConfigInterface')
+->getValue('dcw_menu_configaration/menulinkremovecattab/all_category_id');
+
+$curcatid = $currentCategory->getId();
+
+if((int)$curcatid != (int)$AllcatId) :
+$display_type = $currentCategory->getDisplayMode();
+    if($display_type == "PAGE") :
+        $customerFavorite = $currentCategory->getCustomerFavorite();
+        $aboutCategory = $currentCategory->getAboutCategory();
+        $categoryOverview = $currentCategory->getCategoryOverview();
+    ?>
+    <div class="category-description-after">
+            <?php
+                echo $this->getLayout()
+                ->createBlock('Magento\Cms\Block\Block')
+                ->setBlockId('cpp_shop_by_category')
+                ->toHtml();
+            ?>
+            <?= /* @noEscape */ $this->helper(Magento\Catalog\Helper\Output::class)->categoryAttribute(
+                $currentCategory,
+                $customerFavorite,
+                'description'
+            ) ?>
+            <?= /* @noEscape */ $this->helper(Magento\Catalog\Helper\Output::class)->categoryAttribute(
+                $currentCategory,
+                $aboutCategory,
+                'description'
+            ) ?>
+            <?php
+                echo $this->getLayout()
+                ->createBlock('Magento\Cms\Block\Block')
+                ->setBlockId('cpp_fAQ_content')
+                ->toHtml();
+            ?>
+            <?= /* @noEscape */ $this->helper(Magento\Catalog\Helper\Output::class)->categoryAttribute(
+                $currentCategory,
+                $categoryOverview,
+                'description'
+            ) ?>
+    </div>
+    <?php 
+    endif;
+endif;   
+?>        
